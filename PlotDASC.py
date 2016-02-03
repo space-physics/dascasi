@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Plots / plays Poker Flat DASC all-sky camera data FITS files
+Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS files
 
-To download DASC images using Octave, Matlab, or Python checkout:
-https://github.com/jswoboda/ISR_Toolbox/blob/master/Example_Scripts/loadDASC2013Apr14.py
+To download DASC images using Matlab checkout:
+https://github.com/jswoboda/ISR_Toolbox/blob/master/Example_Scripts/loadDASC2013Apr14.m
 or
 download manually from
 https://amisr.asf.alaska.edu/PKR/DASC/RAW/
