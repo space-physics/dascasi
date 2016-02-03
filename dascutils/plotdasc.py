@@ -1,0 +1,75 @@
+from pathlib import Path
+from tempfile import mkstemp
+from numpy import arange
+from pytz import UTC
+from datetime import datetime
+from scipy.interpolate import interp1d
+from matplotlib.pyplot import draw,pause,subplots
+from matplotlib.colors import LogNorm
+import matplotlib.animation as anim
+
+def histdasc(img,wavelength,odir=None):
+    """
+    creates per wavelength histograms
+    the entries in list img correspond to wavelength, a 1-D array
+    """
+    if odir: odir =Path(odir).expanduser()
+    assert len(wavelength)==len(img) #works for 3-D img as well, assuming C-order.
+
+    fg,axs = subplots(1,3,figsize=(15,5))
+    for a,I,w in zip(axs,img,wavelength):
+        a.hist(I.ravel(),bins=128)
+        a.set_yscale('log')
+        a.set_title('$\lambda={}$ nm'.format(w))
+        a.set_xlabel('14-bit data numbers')
+
+    if odir:
+        fg.savefig(str(odir/'DASChistogram.png'),bbox_inches='tight',dpi=100)
+
+def moviedasc(img,wavelength,times,odir,cadence):
+
+    if odir:
+        ofn =Path(odir).expanduser()/'DASC.mkv'
+        write=True
+    else:
+        ofn = mkstemp()
+        write=False
+
+    Writer = anim.writers['ffmpeg']
+    writer = Writer(fps=5,
+                    metadata=dict(artist='Michael Hirsch'),
+                    codec='ffv1')
+
+    fg,axs = subplots(1,3,figsize=(15,5))
+    hi = []; ht=[]
+    for a,w,x,mm,c in zip(axs,wavelength,(0.225,0.5,0.775),
+                     ((350,800),(350,9000),(350,900)),('b','g','r')):
+        a.axis('off')
+        fg.text(x,0.05,str(w) + ' nm',color=c)
+        hi.append(a.imshow(img[0][0],vmin=mm[0],vmax=mm[1],origin='bottom',
+                        norm=LogNorm(),cmap='gray'))
+        ht.append(a.set_title('',color=c))
+        #fg.colorbar(hi[-1],ax=a).set_label('14-bit data numbers')
+
+    T = max([t[0,0] for t in times])
+    Tmax = min([t[-1,0] for t in times])
+#%% loop
+    try:
+        with writer.saving(fg, str(ofn),150):
+            while T<=Tmax:
+                for I,Hi,Ht,t in zip(img,hi,ht,times):
+                    ft = interp1d(t[:,0],arange(len(t)),kind='nearest')
+                    ind = ft(T).astype(int)
+                    #print(ind,end=' ')
+                    Hi.set_data(I[ind])
+                    try:
+                        Ht.set_text(datetime.fromtimestamp(t[ind,0],tz=UTC))
+                    except OSError: #file had corrupted time
+                        Ht.set_text('')
+
+                draw(); pause(0.05)
+                T += cadence
+                if write:
+                    writer.grab_frame(facecolor='k')
+    except KeyboardInterrupt:
+        return
