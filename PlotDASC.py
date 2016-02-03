@@ -11,6 +11,8 @@ note the capitalization is required in that URL.
 """
 from dascutils.readDASCfits import readallDasc
 from dascutils.plotdasc import histdasc,moviedasc
+#
+from themisasi.readthemis import mergefov
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -22,9 +24,16 @@ if __name__ == '__main__':
     p.add_argument('-m','--minmax',help='set values outside these limits to 0, due to data corruption',type=int,nargs=2,default=[350,9000])
     p.add_argument('-c','--cadence',help='set playback cadence to request times [sec]',type=float,default=5.)
     p.add_argument('-o','--odir',help='output directory')
+    p.add_argument('--ncal',help='narrow FOV camera calibration files HDF5',nargs='+')
+    p.add_argument('--projalt',help='altitude [km] to project common FOV at',type=float,default=110)
     p=p.parse_args()
 
-    img,times,az,el = readallDasc(p.indir,p.azfn,p.elfn,p.wavelength,p.minmax)
+    ocalfn = None  #filename to save az,el contour plot png
+
+    img,times,waz,wel,wlla = readallDasc(p.indir,p.azfn,p.elfn,p.wavelength,p.minmax)
+
+    rows,cols = mergefov(ocalfn,wlla,waz,wel,None,None,p.ncal,p.projalt)
+
 #%% plots
     histdasc(img,p.wavelength,p.odir)
 
