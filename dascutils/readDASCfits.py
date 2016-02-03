@@ -29,7 +29,7 @@ def readallDasc(indir,azfn,elfn,wl,minmax):
     except Exception: #azel data wasn't loaded
         az=el=None
 
-    return img,times,az,el
+    return img,times,az,el,sensorloc
 
 def readCalFITS(indir,azfn,elfn,wl,minmax):
     indir = Path(indir).expanduser()
