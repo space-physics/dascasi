@@ -16,6 +16,12 @@ from dascutils.plotdasc import histdasc,moviedasc
 #
 from themisasi.readthemis import mergefov
 
+def plothstfovondasc(img,wavelength,odir,cadence,rows,cols):
+    histdasc(img,wavelength,odir) #histogram
+
+    moviedasc(img,wavelength,times,odir,cadence,rows,cols)
+
+
 if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='for Poker Flat DASC all sky camera, read az/el mapping and images')
@@ -32,12 +38,10 @@ if __name__ == '__main__':
 
     ocalfn = None  #filename to save az,el contour plot png
 
-    if 0:
+    try:
+        plothstfovondasc(img,p.wavelength,p.odir,p.cadence,rows,cols)
+    except NameError:
         img,times,waz,wel,wlla = readallDasc(p.indir,p.azfn,p.elfn,p.wavelength,p.minmax)
+        rows,cols = mergefov(ocalfn,wlla,waz,wel,None,None,p.ncal,p.projalt)
 
-    rows,cols = mergefov(ocalfn,wlla,waz,wel,None,None,p.ncal,p.projalt)
-
-#%% plots
-    histdasc(img,p.wavelength,p.odir)
-
-    moviedasc(img,p.wavelength,times,p.odir,p.cadence)
+        plothstfovondasc(img,p.wavelength,p.odir,p.cadence,rows,cols)

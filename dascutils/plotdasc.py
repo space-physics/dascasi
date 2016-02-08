@@ -7,6 +7,8 @@ from scipy.interpolate import interp1d
 from matplotlib.pyplot import draw,pause,subplots
 from matplotlib.colors import LogNorm
 import matplotlib.animation as anim
+#
+from themisasi.plots import overlayrowcol
 
 def histdasc(img,wavelength,odir=None):
     """
@@ -26,10 +28,10 @@ def histdasc(img,wavelength,odir=None):
     if odir:
         fg.savefig(str(odir/'DASChistogram.png'),bbox_inches='tight',dpi=100)
 
-def moviedasc(img,wavelength,times,odir,cadence):
+def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
 
     if odir:
-        ofn =Path(odir).expanduser()/'DASC.mkv'
+        ofn = Path(odir).expanduser()/'DASC.mkv'
         write=True
     else:
         ofn = mkstemp()
@@ -50,6 +52,7 @@ def moviedasc(img,wavelength,times,odir,cadence):
                         norm=LogNorm(),cmap='gray'))
         ht.append(a.set_title('',color=c))
         #fg.colorbar(hi[-1],ax=a).set_label('14-bit data numbers')
+        overlayrowcol(a,rows,cols)
 
     T = max([t[0,0] for t in times])
     Tmax = min([t[-1,0] for t in times])
@@ -72,4 +75,4 @@ def moviedasc(img,wavelength,times,odir,cadence):
                 if write:
                     writer.grab_frame(facecolor='k')
     except KeyboardInterrupt:
-        return
+        pass
