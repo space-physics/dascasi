@@ -39,15 +39,16 @@ def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
 
     Writer = anim.writers['ffmpeg']
     writer = Writer(fps=5,
-                    metadata=dict(artist='Michael Hirsch'),
+                    metadata={'artist':'Michael Hirsch'},
                     codec='ffv1')
 
     fg,axs = subplots(1,3,figsize=(15,5))
     hi = []; ht=[]
     for a,w,x,mm,c in zip(axs,wavelength,(0.225,0.5,0.775),
                      ((350,800),(350,9000),(350,900)),('b','g','r')):
-        a.axis('off')
-        fg.text(x,0.05,str(w) + ' nm',color=c)
+        #a.axis('off') #this also removes xlabel,ylabel
+        a.set_xticks([]); a.set_yticks([])
+        a.set_xlabel('{} nm'.format(w),color=c)
         hi.append(a.imshow(img[0][0],vmin=mm[0],vmax=mm[1],origin='bottom',
                         norm=LogNorm(),cmap='gray'))
         ht.append(a.set_title('',color=c))
@@ -56,6 +57,8 @@ def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
 
     T = max([t[0,0] for t in times])
     Tmax = min([t[-1,0] for t in times])
+
+    fg.tight_layout(h_pad=1.08) #get rid of big white space in between figures
 #%% loop
     try:
         with writer.saving(fg, str(ofn),150):
