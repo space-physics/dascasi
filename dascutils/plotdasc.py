@@ -1,5 +1,5 @@
 from pathlib import Path
-from tempfile import mkstemp
+from os import devnull
 from numpy import arange
 from pytz import UTC
 from datetime import datetime
@@ -34,7 +34,7 @@ def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
         ofn = Path(odir).expanduser()/'DASC.mkv'
         write=True
     else:
-        ofn = mkstemp()
+        ofn = devnull
         write=False
 
     Writer = anim.writers['ffmpeg']
