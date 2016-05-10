@@ -14,7 +14,7 @@ This program by default projects HiST auroral tomography system FOV onto PFRR DA
 from dascutils.readDASCfits import readallDasc
 from dascutils.plotdasc import histdasc,moviedasc
 #
-from themisasi.readthemis import mergefov
+from themisasi.fov import mergefov
 
 def plothstfovondasc(img,wavelength,odir,cadence,rows,cols):
     histdasc(img,wavelength,odir) #histogram
