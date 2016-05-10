@@ -3,6 +3,12 @@
 from setuptools import setup
 import subprocess
 
+try:
+    subprocess.run(['conda','install','--yes','--quiet','--file','requirements.txt'],shell=False) #don't use os.environ
+except Exception as e:
+    print('you will need to install packages in requirements.txt  {}'.format(e))
+
+
 with open('README.rst','r') as f:
 	long_description = f.read()
 
@@ -12,14 +18,11 @@ setup(name='dascutils',
 	  long_description=long_description,
 	  author='Michael Hirsch',
 	  url='https://github.com/scienceopen/dascutils',
-	  install_requires=['histutils'],
-   dependency_links = ['https://github.com/scienceopen/histutils/tarball/master#egg=histutils'],
+	  install_requires=['histutils','themisasi'],
+   dependency_links = [
+        'https://github.com/scienceopen/histutils/tarball/master#egg=histutils', 
+        'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi'],
       packages=['dascutils'],
 	  )
 
-#%%
-try:
-    subprocess.run(['conda','install','--yes','--quiet','--file','requirements.txt'],shell=False) #don't use os.environ
-except Exception as e:
-    print('you will need to install packages in requirements.txt  {}'.format(e))
 

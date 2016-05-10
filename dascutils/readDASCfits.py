@@ -81,9 +81,10 @@ def readFITS(flist,azfn,elfn,heightkm=110,minmax=None):
                 Don Hampton says about 90% of data OK, but 10% NOK.
                 """
 
-                I = np.rot90(h[0].data.astype(np.uint16),-1)
+                I = h[0].data
                 if not 'BZERO' in h[0].header.keys():
-                    I= np.clip(I,0,16384) #discard bad values for 14-bit cameras.
+                    I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
+                    I = np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website
 
                 img[i,...] = I
 
@@ -101,18 +102,14 @@ def readFITS(flist,azfn,elfn,heightkm=110,minmax=None):
 
     coordnames="spherical"
     try:
-        azfn = Path(azfn).expanduser()
-        elfn = Path(elfn).expanduser()
-        with fits.open(str(azfn),mode='readonly') as h:
-            az = h[0].data
-        with fits.open(str(elfn),mode='readonly') as h:
-            el = h[0].data
+        with fits.open(str(Path(azfn).expanduser()),mode='readonly') as h:
+            az = np.rot90(h[0].data,2) # NOTE: rotation to match UAF AVIs NOT flipud
+        with fits.open(str(Path(elfn).expanduser()),mode='readonly') as h:
+            el = np.rot90(h[0].data,2) # NOTE: rotation to match UAF AVIs NOT flipud
         dataloc[:,0] = heightkm
         dataloc[:,1] = az.ravel()
         dataloc[:,2] = el.ravel()
     except Exception as e:
        dataloc=None
-
-
 
     return data,coordnames,dataloc,sensorloc,times

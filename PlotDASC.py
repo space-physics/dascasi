@@ -42,6 +42,6 @@ if __name__ == '__main__':
         plothstfovondasc(img,p.wavelength,p.odir,p.cadence,rows,cols)
     except NameError:
         img,times,waz,wel,wlla = readallDasc(p.indir,p.azfn,p.elfn,p.wavelength,p.minmax)
-        rows,cols = mergefov(ocalfn,wlla,waz,wel,None,None,p.ncal,p.projalt)
+        rows,cols = mergefov(ocalfn,wlla,waz,wel,None,None,p.ncal,p.projalt,site='DASC')
 
         plothstfovondasc(img,p.wavelength,p.odir,p.cadence,rows,cols)
