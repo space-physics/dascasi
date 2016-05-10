@@ -19,13 +19,13 @@ def readallDasc(indir,azfn,elfn,wl,minmax):
 
     img = []; times = []
     for w in wl:
-        data,coordnames,dataloc,sensorloc,time  = readCalFITS(indir,azfn,elfn,w,minmax)
+        data,azel,sensorloc,time  = readCalFITS(indir,azfn,elfn,w,minmax)
         img.append(data['image'])
         times.append(time)
 #%% histogram
     try:
-        az = dataloc[:,1].reshape(img[0].shape[1:])
-        el = dataloc[:,2].reshape(img[0].shape[1:])
+        az = azel[0]
+        el = azel[1]
     except Exception: #azel data wasn't loaded
         az=el=None
 
@@ -41,10 +41,15 @@ def readCalFITS(indir,azfn,elfn,wl,minmax):
     flist += sorted(indir.glob("PKR_DASC_0{}_*.FITS".format(wl)))
     return readDASC(flist,azfn,elfn,minmax=minmax)
 
-def readDASC(flist,azfn,elfn,heightkm=110,minmax=None):
+def readDASC(flist,azfn,elfn,minmax=None):
     """
     reads FITS images and spatial az/el calibration for allsky camera
     """
+    try:
+        flist[0]
+    except TypeError:
+        flist = [flist]
+
     if not flist:
         warn('no data files found')
         return
@@ -52,7 +57,6 @@ def readDASC(flist,azfn,elfn,heightkm=110,minmax=None):
     with fits.open(str(flist[0]),mode='readonly') as h:
         img = h[0].data
     sensorloc = np.empty(3) #in case error in reading this file
-    dataloc = np.empty((img.size,3))
     times =   np.empty((len(flist),2)); times.fill(np.nan)
     assert h[0].header['BITPIX']==16,'this function assumes unsigned 16-bit data'
     img =     np.zeros((len(flist),img.shape[0],img.shape[1]),np.uint16) #zeros in case a few images fail to load
@@ -100,16 +104,12 @@ def readDASC(flist,azfn,elfn,heightkm=110,minmax=None):
     data = {'image':img,
             'lambda':wavelen}
 
-    coordnames="spherical"
-    try:
+    if azfn is not None and elfn is not None:
         with fits.open(str(Path(azfn).expanduser()),mode='readonly') as h:
             az = np.rot90(h[0].data,2) # NOTE: rotation to match UAF AVIs NOT flipud
         with fits.open(str(Path(elfn).expanduser()),mode='readonly') as h:
             el = np.rot90(h[0].data,2) # NOTE: rotation to match UAF AVIs NOT flipud
-        dataloc[:,0] = heightkm
-        dataloc[:,1] = az.ravel()
-        dataloc[:,2] = el.ravel()
-    except Exception as e:
-       dataloc=None
+    else:
+        az=el=None
 
-    return data,coordnames,dataloc,sensorloc,times
+    return data,(az,el),sensorloc,times
