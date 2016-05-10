@@ -39,9 +39,9 @@ def readCalFITS(indir,azfn,elfn,wl,minmax):
     flist = []
     #for w in wl:
     flist += sorted(indir.glob("PKR_DASC_0{}_*.FITS".format(wl)))
-    return readFITS(flist,azfn,elfn,minmax=minmax)
+    return readDASC(flist,azfn,elfn,minmax=minmax)
 
-def readFITS(flist,azfn,elfn,heightkm=110,minmax=None):
+def readDASC(flist,azfn,elfn,heightkm=110,minmax=None):
     """
     reads FITS images and spatial az/el calibration for allsky camera
     """
@@ -67,9 +67,9 @@ def readFITS(flist,azfn,elfn,heightkm=110,minmax=None):
 
                 wavelen[i] = h[0].header['FILTWAV']
 
-                sensorloc=np.array([h[0].header['GLAT'],
-                                    h[0].header['GLON'],
-                                    0])
+                sensorloc={'lat':h[0].header['GLAT'],
+                           'lon':h[0].header['GLON'],
+                            'alt_m':200.} #TODO use real DASC altitude
 
                 """
                 DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
@@ -92,11 +92,11 @@ def readFITS(flist,azfn,elfn,heightkm=110,minmax=None):
             logging.info('{} has error {}'.format(fn,e))
 
 
-    if minmax:
+    if minmax is not None:
         #%% deal with corrupted data
         img[(img<minmax[0]) | (img>minmax[1])] = 1 #instead of 0 for lognorm
 
-
+    #we return the images as a 3-D array data['image'] all wavelengths stacked together, which you can select by data['lambda']
     data = {'image':img,
             'lambda':wavelen}
 
