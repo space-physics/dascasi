@@ -12,7 +12,7 @@ note the capitalization is required in that URL.
 This program by default projects HiST auroral tomography system FOV onto PFRR DASC.
 """
 from dascutils.readDASCfits import readallDasc
-from dascutils.plotdasc import histdasc,moviedasc
+from dascutils.plots import histdasc,moviedasc
 #
 from themisasi.fov import mergefov
 
