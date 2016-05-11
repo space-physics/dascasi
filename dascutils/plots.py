@@ -49,8 +49,9 @@ def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
         #a.axis('off') #this also removes xlabel,ylabel
         a.set_xticks([]); a.set_yticks([])
         a.set_xlabel('{} nm'.format(w),color=c)
-        hi.append(a.imshow(img[0][0],vmin=mm[0],vmax=mm[1],origin='bottom',
-                        norm=LogNorm(),cmap='gray'))
+        hi.append(a.imshow(img[0][0],vmin=mm[0],vmax=mm[1],
+                           origin='lower',
+                           norm=LogNorm(),cmap='gray'))
         ht.append(a.set_title('',color=c))
         #fg.colorbar(hi[-1],ax=a).set_label('14-bit data numbers')
         overlayrowcol(a,rows,cols)
