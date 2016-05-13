@@ -88,6 +88,7 @@ def readDASC(flist,azfn,elfn,minmax=None):
                 I = h[0].data
                 if not 'BZERO' in h[0].header.keys():
                     I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
+                    print('rotate')
                     I = np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website
 
                 img[i,...] = I
@@ -106,9 +107,9 @@ def readDASC(flist,azfn,elfn,minmax=None):
 
     if azfn is not None and elfn is not None:
         with fits.open(str(Path(azfn).expanduser()),mode='readonly') as h:
-            az = np.rot90(h[0].data,2) # NOTE: rotation to match UAF AVIs NOT flipud
+            az = np.rot90(h[0].data,0) # NOTE: rotation to match UAF AVIs NOT flipud
         with fits.open(str(Path(elfn).expanduser()),mode='readonly') as h:
-            el = np.rot90(h[0].data,2) # NOTE: rotation to match UAF AVIs NOT flipud
+            el = np.rot90(h[0].data,0) # NOTE: rotation to match UAF AVIs NOT flipud
     else:
         az=el=None
 
