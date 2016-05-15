@@ -8,7 +8,8 @@ from pathlib import Path
 from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
-from warnings import warn
+from datetime import datetime
+from pytz import UTC
 #
 from histutils.fortrandates import forceutc
 
@@ -41,33 +42,46 @@ def readCalFITS(indir,azfn,elfn,wl,minmax):
     flist += sorted(indir.glob("PKR_DASC_0{}_*.FITS".format(wl)))
     return readDASC(flist,azfn,elfn,minmax=minmax)
 
-def readDASC(flist,azfn,elfn,minmax=None):
+def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
     """
     reads FITS images and spatial az/el calibration for allsky camera
     """
-    try:
-        flist[0]
-    except TypeError:
+    if isinstance(flist,(str,Path)):
         flist = [flist]
+#%% read one file mode
+    if treq is not None:
+        if isinstance(treq,datetime):
+            treq = treq.timestamp()
+        assert isinstance(treq,float) and treq>1e9,'assuming single unix timestamp request for now'
 
-    if not flist:
-        warn('no data files found')
-        return
+        expstart = np.empty(len(flist)); expstart.fill(np.nan)
+
+        for i,fn in enumerate(flist):
+            try:
+                with fits.open(str(fn),mode='readonly') as h:
+                    expstart[i] = forceutc(parse(h[0].header['OBSDATE'] + ' ' + h[0].header['OBSSTART'])).timestamp()
+            except IOError: #many corrupted files, accounted for by preallocated vectors
+                pass
+
+        fi = np.nanargmin(abs(expstart-treq)) #index number in flist desired
+        flist = [flist[fi]]
+
 #%% preallocate, assuming all images the same size
     with fits.open(str(flist[0]),mode='readonly') as h:
         img = h[0].data
-    sensorloc = np.empty(3) #in case error in reading this file
+    sensorloc = None #in case error in reading this file
     times =   np.empty((len(flist),2)); times.fill(np.nan)
     assert h[0].header['BITPIX']==16,'this function assumes unsigned 16-bit data'
     img =     np.zeros((len(flist),img.shape[0],img.shape[1]),np.uint16) #zeros in case a few images fail to load
     wavelen = np.empty(len(flist)); wavelen.fill(np.nan)
+    iok = np.zeros(len(flist)).astype(bool)
 #%% iterate over image files
     for i,fn in enumerate(flist):
         try:
             with fits.open(str(fn),mode='readonly') as h:
-                expstart_dt = forceutc(parse(h[0].header['OBSDATE'] + ' ' + h[0].header['OBSSTART']))
-                expstart_unix = expstart_dt.timestamp()
-                times[i,:] = [expstart_unix,expstart_unix + h[0].header['EXPTIME']]
+                expstart = forceutc(parse(h[0].header['OBSDATE'] + ' ' + h[0].header['OBSSTART'])).timestamp()
+
+                times[i,:] = [expstart,expstart + h[0].header['EXPTIME']] #EXPTIME is in seconds
 
                 wavelen[i] = h[0].header['FILTWAV']
 
@@ -87,17 +101,27 @@ def readDASC(flist,azfn,elfn,minmax=None):
 
                 I = h[0].data
                 if not 'BZERO' in h[0].header.keys():
+                    I[I>16384] = 0 #extreme, corrupted data
                     I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
+<<<<<<< HEAD
                     I = np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website
 
                 img[i,...] = I
+=======
+            #
+            img[i,...] =  np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website
+            iok[i] = True
+>>>>>>> 304319271ad4d0a23554c8f292ef9997f58fcd8b
 
         except Exception as e:
             logging.info('{} has error {}'.format(fn,e))
 
-
+#%% keep only good times
+    img = img[iok,...]
+    times = times[iok,:]
+    wavelen = wavelen[iok]
+#%% deal with corrupted data
     if minmax is not None:
-        #%% deal with corrupted data
         img[(img<minmax[0]) | (img>minmax[1])] = 1 #instead of 0 for lognorm
 
     #we return the images as a 3-D array data['image'] all wavelengths stacked together, which you can select by data['lambda']
@@ -106,9 +130,9 @@ def readDASC(flist,azfn,elfn,minmax=None):
 
     if azfn is not None and elfn is not None:
         with fits.open(str(Path(azfn).expanduser()),mode='readonly') as h:
-            az = np.rot90(h[0].data,0) # NOTE: rotation to match UAF AVIs NOT flipud
+            az = h[0].data # NOTE: no rotation/flip
         with fits.open(str(Path(elfn).expanduser()),mode='readonly') as h:
-            el = np.rot90(h[0].data,0) # NOTE: rotation to match UAF AVIs NOT flipud
+            el = h[0].data # NOTE: no rotation/flip
     else:
         az=el=None
 
