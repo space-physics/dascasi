@@ -9,7 +9,6 @@ from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
 from datetime import datetime
-from pytz import UTC
 #
 from histutils.fortrandates import forceutc
 
@@ -103,15 +102,9 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
                 if not 'BZERO' in h[0].header.keys():
                     I[I>16384] = 0 #extreme, corrupted data
                     I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
-<<<<<<< HEAD
-                    I = np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website
 
-                img[i,...] = I
-=======
-            #
             img[i,...] =  np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website
             iok[i] = True
->>>>>>> 304319271ad4d0a23554c8f292ef9997f58fcd8b
 
         except Exception as e:
             logging.info('{} has error {}'.format(fn,e))
