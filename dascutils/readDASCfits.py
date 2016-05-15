@@ -88,7 +88,6 @@ def readDASC(flist,azfn,elfn,minmax=None):
                 I = h[0].data
                 if not 'BZERO' in h[0].header.keys():
                     I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
-                    print('rotate')
                     I = np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website
 
                 img[i,...] = I
