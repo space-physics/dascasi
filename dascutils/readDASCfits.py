@@ -103,7 +103,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
                     I[I>16384] = 0 #extreme, corrupted data
                     I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
 
-            img[i,...] =  np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website
+            img[i,...] =  np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website. It's not transpose, and the cal file seems off.
             iok[i] = True
 
         except Exception as e:
