@@ -73,7 +73,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
     assert h[0].header['BITPIX']==16,'this function assumes unsigned 16-bit data'
     img =     np.zeros((len(flist),img.shape[0],img.shape[1]),np.uint16) #zeros in case a few images fail to load
     wavelen = np.empty(len(flist)); wavelen.fill(np.nan)
-    iok = np.zeros(len(flist)).astype(bool)
+    iok = np.zeros(len(flist),bool)
 #%% iterate over image files
     for i,fn in enumerate(flist):
         try:
