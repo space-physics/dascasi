@@ -1,3 +1,9 @@
+.. image:: https://travis-ci.org/scienceopen/dascutils.svg?branch=master
+    :target: https://travis-ci.org/scienceopen/dascutils
+
+.. image:: https://coveralls.io/repos/github/scienceopen/dascutils/badge.svg?branch=master 
+    :target: https://coveralls.io/github/scienceopen/dascutils?branch=master    
+
 ============
 DASC utils
 ============
