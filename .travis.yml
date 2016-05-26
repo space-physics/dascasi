@@ -19,7 +19,6 @@ matrix:
 
 before_install:
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-$osv-x86_64.sh -O miniconda.sh
-    - chmod +x miniconda.sh
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
 
