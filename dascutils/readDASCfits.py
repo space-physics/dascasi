@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
 import logging
-from pathlib import Path
+from . import Path
 from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
