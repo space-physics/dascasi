@@ -13,7 +13,6 @@ with open('README.rst','r') as f:
 	long_description = f.read()
 
 setup(name='dascutils',
-      version='0.1',
 	  description='utilities for the Poker Flat Research Range Digital All Sky Camera, useful for aurora borealis',
 	  long_description=long_description,
 	  author='Michael Hirsch',
@@ -21,7 +20,8 @@ setup(name='dascutils',
 	  install_requires=['histutils','themisasi'],
    dependency_links = [
         'https://github.com/scienceopen/histutils/tarball/master#egg=histutils', 
-        'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi'],
+        'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi'
+	],
       packages=['dascutils'],
 	  )
 
