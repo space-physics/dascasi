@@ -1,23 +1,20 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from setuptools import setup
 import subprocess
 
 try:
-    subprocess.run(['conda','install','--yes','--file','requirements.txt'])
+    subprocess.call(['conda','install','--file','requirements.txt'])
 except Exception as e:
-    print('you will need to install packages in requirements.txt  {}'.format(e))
+    pass
 
-
-with open('README.rst','r') as f:
-	long_description = f.read()
 
 setup(name='dascutils',
 	  description='utilities for the Poker Flat Research Range Digital All Sky Camera, useful for aurora borealis',
-	  long_description=long_description,
 	  author='Michael Hirsch',
 	  url='https://github.com/scienceopen/dascutils',
-	  install_requires=['histutils','themisasi'],
+	  install_requires=['histutils','themisasi',
+                        'pathlib2'],
    dependency_links = [
         'https://github.com/scienceopen/histutils/tarball/master#egg=histutils', 
         'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi'

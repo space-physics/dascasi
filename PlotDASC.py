@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS files
 
