@@ -2,13 +2,6 @@
 """
 Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS files
 
-To download DASC images using Matlab checkout:
-https://github.com/jswoboda/ISR_Toolbox/blob/master/Example_Scripts/loadDASC2013Apr14.m
-or
-download manually from
-https://amisr.asf.alaska.edu/PKR/DASC/RAW/
-note the capitalization is required in that URL.
-
 This program by default projects HiST auroral tomography system FOV onto PFRR DASC.
 """
 from dascutils.readDASCfits import readallDasc
