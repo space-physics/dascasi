@@ -4,6 +4,9 @@ Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS fil
 
 This program by default projects HiST auroral tomography system FOV onto PFRR DASC.
 """
+import matplotlib
+matplotlib.use('Agg')
+#
 from dascutils.readDASCfits import readallDasc
 from dascutils.plots import histdasc,moviedasc
 #
@@ -24,7 +27,7 @@ if __name__ == '__main__':
     p.add_argument('-w','--wavelength',help='select wavelength(s) to plot simultaneously [428 558 630]',type=int,default=[428,558,630],nargs='+')
     p.add_argument('-m','--minmax',help='set values outside these limits to 0, due to data corruption',type=int,nargs=2,default=[350,9000])
     p.add_argument('-c','--cadence',help='set playback cadence to request times [sec]',type=float,default=5.)
-    p.add_argument('-o','--odir',help='output directory')
+    p.add_argument('-o','--odir',help='output directory',default='.')
     p.add_argument('--ncal',help='narrow FOV camera calibration files HDF5',nargs='+',default=['../histutils/cal/hst0cal.h5','../histutils/cal/hst1cal.h5'])
     p.add_argument('--projalt',help='altitude [METERS] to project common FOV at',type=float,default=110e3)
     p=p.parse_args()

@@ -66,9 +66,17 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
         flist = [flist[fi]]
 
 #%% preallocate, assuming all images the same size
-    with fits.open(str(flist[0]),mode='readonly') as h:
-        img = h[0].data
-    sensorloc = None #in case error in reading this file
+    for f in flist: #find the first "good" file
+        try:
+            with fits.open(str(f),mode='readonly') as h:
+                img = h[0].data
+                sensorloc={'lat':h[0].header['GLAT'],
+                           'lon':h[0].header['GLON'],
+                            'alt_m':200.} #TODO use real DASC altitude
+            break
+        except IOError:
+            pass
+
     times =   np.empty((len(flist),2)); times.fill(np.nan)
     assert h[0].header['BITPIX']==16,'this function assumes unsigned 16-bit data'
     img =     np.zeros((len(flist),img.shape[0],img.shape[1]),np.uint16) #zeros in case a few images fail to load
@@ -83,10 +91,6 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
                 times[i,:] = [expstart,expstart + h[0].header['EXPTIME']] #EXPTIME is in seconds
 
                 wavelen[i] = h[0].header['FILTWAV']
-
-                sensorloc={'lat':h[0].header['GLAT'],
-                           'lon':h[0].header['GLON'],
-                            'alt_m':200.} #TODO use real DASC altitude
 
                 """
                 DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
@@ -106,7 +110,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
             img[i,...] =  np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website. It's not transpose, and the cal file seems off.
             iok[i] = True
 
-        except Exception as e:
+        except IOError as e:
             logging.info('{} has error {}'.format(fn,e))
 
 #%% keep only good times
