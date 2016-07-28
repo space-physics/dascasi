@@ -44,6 +44,7 @@ def readCalFITS(indir,azfn,elfn,wl,minmax):
 def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
     """
     reads FITS images and spatial az/el calibration for allsky camera
+    Bdecl is in degrees, from IGRF model
     """
     if isinstance(flist,(str,Path)):
         flist = [flist]
@@ -127,7 +128,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
 
     if azfn is not None and elfn is not None:
         with fits.open(str(Path(azfn).expanduser()),mode='readonly') as h:
-            az = h[0].data # NOTE: no rotation/flip
+            az = h[0].data
         with fits.open(str(Path(elfn).expanduser()),mode='readonly') as h:
             el = h[0].data # NOTE: no rotation/flip
     else:
