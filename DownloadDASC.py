@@ -15,7 +15,7 @@ def getdasc(year,month,day,hour,minute,host,site,odir='',clobber=False):
 
 #%% get available files for this day
     with ftplib.FTP(ftop,'anonymous','guest',timeout=15) as F:
-        rpath = fpath + '/DASC/RAW/{}/{:4d}{:02d}{:02d}'.format(year,year,month,day)
+        rpath = fpath + '/DASC/RAW/{:4d}/{:4d}{:02d}{:02d}'.format(year,year,month,day)
         F.cwd(rpath)
         dlist = F.nlst()
 
