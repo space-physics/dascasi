@@ -1,4 +1,5 @@
 #!/bin/bash
+# use DownloadDASC.py instead of this script.
 # modified from Bill Bristow to avoid anti-leeching measures
 # reference: https://scivision.co/wget-download-an-http-directory-recursively/
 
