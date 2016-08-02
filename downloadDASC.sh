@@ -1,4 +1,5 @@
 #!/bin/bash
+# modified from Bill Bristow to avoid anti-leeching measures
 # reference: https://scivision.co/wget-download-an-http-directory-recursively/
 
 date=$1
