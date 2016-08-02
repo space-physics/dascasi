@@ -15,8 +15,25 @@ This program handles the corrupted FITS files due to the RAID array failure on 2
 
 The raw data FITS are one image per file
 
+.. contents::
+
 Install
 =======
 ::
 
 	python setup.py develop
+	
+Download raw DASC files by time
+===========================
+Example download October 7, 2015 from 8:23 to 8:54 UTC::
+
+    ./DownloadDASC.py 2015 10 7 8:23 8:54 
+    
+-o  download directory
+-c  clobber existing files
+
+Make movies from DASC raw data files
+====================================
+Plots all wavelengths in subplots::
+
+    ./PlotDASC.py datadir
