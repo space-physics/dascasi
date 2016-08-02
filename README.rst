@@ -31,6 +31,7 @@ Example download October 7, 2015 from 8:23 to 8:54 UTC::
     
 -o  download directory
 -c  clobber existing files
+-s  three-letter site acronym PKR for poker flat etc.
 
 Make movies from DASC raw data files
 ====================================
