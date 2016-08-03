@@ -22,6 +22,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     p = ArgumentParser(description='for Poker Flat DASC all sky camera, read az/el mapping and images')
     p.add_argument('indir',help='directory of .fits or specific .fits file')
+    p.add_argument('-t','--tlim',help='only plot data in this range',nargs=2,default=(None,None))
     p.add_argument('-a','--azfn',help='filename for DASC .fits azimuth calibration',default='cal/PKR_DASC_20110112_AZ_10deg.fits')
     p.add_argument('-e','--elfn',help='filename for DASC .fits elevation calibration',default='cal/PKR_DASC_20110112_EL_10deg.fits')
     p.add_argument('-w','--wavelength',help='select wavelength(s) to plot simultaneously [428 558 630]',type=int,default=[428,558,630],nargs='+')
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     try:
         plothstfovondasc(img,p.wavelength,p.odir,p.cadence,rows,cols)
     except NameError:
-        img,times,waz,wel,wlla = readallDasc(p.indir,p.azfn,p.elfn,p.wavelength,p.minmax)
+        img,times,waz,wel,wlla = readallDasc(p.indir,p.azfn,p.elfn,p.wavelength,p.minmax,p.tlim)
         rows,cols = mergefov(ocalfn,wlla,waz,wel,None,None,p.ncal,p.projalt,site='DASC')
 
         plothstfovondasc(img,p.wavelength,p.odir,p.cadence,rows,cols)

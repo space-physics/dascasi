@@ -8,18 +8,18 @@ from . import Path
 from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
-from datetime import datetime
 #
 from histutils.fortrandates import forceutc
+from .common import totimestamp
 
-def readallDasc(indir,azfn,elfn,wl,minmax):
+def readallDasc(indir,azfn,elfn,wl,minmax,tlim=None):
     """
     returns Dasc images in list by wavelength, then by time
     """
 
     img = []; times = []
     for w in wl:
-        data,azel,sensorloc,time  = readCalFITS(indir,azfn,elfn,w,minmax)
+        data,azel,sensorloc,time  = readCalFITS(indir,azfn,elfn,w,minmax,tlim)
         img.append(data['image'])
         times.append(time)
 #%% histogram
@@ -31,29 +31,26 @@ def readallDasc(indir,azfn,elfn,wl,minmax):
 
     return img,times,az,el,sensorloc
 
-def readCalFITS(indir,azfn,elfn,wl,minmax):
+def readCalFITS(indir,azfn,elfn,wl,minmax,tlim=None):
     indir = Path(indir).expanduser()
     if not wl:
         wl = '*' #select all wavelengths
 
-    flist = []
+    #flist = []
     #for w in wl:
-    flist += sorted(indir.glob("PKR_DASC_0{}_*.FITS".format(wl)))
-    return readDASC(flist,azfn,elfn,minmax=minmax)
+    flist = sorted(indir.glob("PKR_DASC_0{}_*.FITS".format(wl)))
+    return readDASC(flist,azfn,elfn,minmax,tlim)
 
 def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
     """
-    if isinstance(flist,(str,Path)):
-        flist = [flist]
+    flist = np.atleast_1d(flist)
+
+    treq = totimestamp(treq)
 #%% read one file mode
     if treq is not None:
-        if isinstance(treq,datetime):
-            treq = treq.timestamp()
-        assert isinstance(treq,float) and treq>1e9,'assuming single unix timestamp request for now'
-
         expstart = np.empty(len(flist)); expstart.fill(np.nan)
 
         for i,fn in enumerate(flist):
@@ -63,8 +60,16 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
             except IOError: #many corrupted files, accounted for by preallocated vectors
                 pass
 
-        fi = np.nanargmin(abs(expstart-treq)) #index number in flist desired
-        flist = [flist[fi]]
+
+
+        if isinstance(treq,float) or len(treq) == 1: # single frame
+            fi = np.nanargmin(abs(expstart-treq)) #index number in flist desired
+        elif len(treq)==2: #frames within bounds
+            fi = (treq[0] <= expstart) & (expstart < treq[1])
+        else:
+            raise ValueError('specify single time or min/max time')
+
+        flist = flist[fi]
 
 #%% preallocate, assuming all images the same size
     for f in flist: #find the first "good" file
