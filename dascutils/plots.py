@@ -10,6 +10,8 @@ import matplotlib.animation as anim
 #
 from themisasi.plots import overlayrowcol
 
+DPI=100
+
 def histdasc(img,wavelength,odir=None):
     """
     creates per wavelength histograms
@@ -26,20 +28,22 @@ def histdasc(img,wavelength,odir=None):
         a.set_xlabel('14-bit data numbers')
 
     if odir:
-        fg.savefig(str(odir/'DASChistogram.png'),bbox_inches='tight',dpi=100)
+        ofn = odir/'DASChistogram.png'
+        print('writing {}'.format(ofn))
+        fg.savefig(str(ofn),bbox_inches='tight',dpi=100)
 
 def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
 
     if odir:
         ofn = Path(odir).expanduser()/'DASC.mkv'
         write=True
+        print('writing {}'.format(ofn))
     else:
         ofn = devnull
         write=False
 
     Writer = anim.writers['ffmpeg']
     writer = Writer(fps=5,
-                    metadata={'artist':'Michael Hirsch'},
                     codec='ffv1')
 
     fg,axs = subplots(1,3,figsize=(15,5))
@@ -61,22 +65,19 @@ def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
 
     fg.tight_layout(h_pad=1.08) #get rid of big white space in between figures
 #%% loop
-    try:
-        with writer.saving(fg, str(ofn),150):
-            while T<=Tmax:
-                for I,Hi,Ht,t in zip(img,hi,ht,times):
-                    ft = interp1d(t[:,0],arange(len(t)),kind='nearest')
-                    ind = ft(T).astype(int)
-                    #print(ind,end=' ')
-                    Hi.set_data(I[ind])
-                    try:
-                        Ht.set_text(datetime.fromtimestamp(t[ind,0],tz=UTC))
-                    except OSError: #file had corrupted time
-                        Ht.set_text('')
+    with writer.saving(fg, str(ofn), DPI):
+        while T<=Tmax:
+            for I,Hi,Ht,t in zip(img,hi,ht,times):
+                ft = interp1d(t[:,0],arange(len(t)),kind='nearest')
+                ind = ft(T).astype(int)
+                #print(ind,end=' ')
+                Hi.set_data(I[ind])
+                try:
+                    Ht.set_text(datetime.fromtimestamp(t[ind,0],tz=UTC))
+                except OSError: #file had corrupted time
+                    Ht.set_text('')
 
-                draw(); pause(0.05)
-                T += cadence
-                if write:
-                    writer.grab_frame(facecolor='k')
-    except KeyboardInterrupt:
-        pass
+            draw(), pause(0.05) # the pause avoids random crashes
+            T += cadence
+            if write:
+                writer.grab_frame(facecolor='k')
