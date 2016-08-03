@@ -35,7 +35,7 @@ def histdasc(img,wavelength,odir=None):
 def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
 
     if odir:
-        ofn = Path(odir).expanduser()/'DASC_{}.avi'.format(times[0][0][0][0])
+        ofn = Path(odir).expanduser()/'DASC_{}.avi'.format(times[0][0][0])
         write=True
         print('writing {}'.format(ofn))
     else:
