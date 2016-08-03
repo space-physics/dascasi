@@ -3,6 +3,8 @@
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
+from warnings import filterwarnings # corrupt FITS files let off a flood of AstroPy warnings
+from astropy.io.fits.verify import VerifyWarning
 import logging
 from . import Path
 from astropy.io import fits
@@ -46,6 +48,8 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
     """
+    filterwarnings('ignore',category=VerifyWarning)
+
     if not flist:
         return RuntimeError('No files were found to read')
     flist = np.atleast_1d(flist)
@@ -72,7 +76,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
             raise ValueError('specify single time or min/max time')
 
         flist = flist[fi]
-        if not flist:
+        if len(flist)==0:
             raise RuntimeError('no files found within time limits')
 
 #%% preallocate, assuming all images the same size
