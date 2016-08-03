@@ -46,6 +46,8 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
     """
+    if not flist:
+        return RuntimeError('No files were found to read')
     flist = np.atleast_1d(flist)
 
     treq = totimestamp(treq)
@@ -70,6 +72,8 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
             raise ValueError('specify single time or min/max time')
 
         flist = flist[fi]
+        if not flist:
+            raise RuntimeError('no files found within time limits')
 
 #%% preallocate, assuming all images the same size
     for f in flist: #find the first "good" file
