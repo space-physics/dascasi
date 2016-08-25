@@ -6,13 +6,13 @@ Run standalone from PlayDASC.py
 from warnings import filterwarnings # corrupt FITS files let off a flood of AstroPy warnings
 from astropy.io.fits.verify import VerifyWarning
 import logging
-from . import Path
+from . import Path,totimestamp
 from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
 #
 from histutils.fortrandates import forceutc
-from .common import totimestamp
+
 
 def readallDasc(indir,azfn,elfn,wl,minmax,tlim=None):
     """
@@ -76,8 +76,8 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
             raise ValueError('specify single time or min/max time')
 
         flist = flist[fi]
-        if len(flist)==0:
-            raise RuntimeError('no files found within time limits')
+        if not flist:
+            raise FileNotFoundError('no files found within time limits')
 
 #%% preallocate, assuming all images the same size
     for f in flist: #find the first "good" file
@@ -88,7 +88,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
                            'lon':h[0].header['GLON'],
                             'alt_m':200.} #TODO use real DASC altitude
             break
-        except IOError:
+        except IOError: # taking first good file
             pass
 
     times =   np.empty((len(flist),2)); times.fill(np.nan)
