@@ -79,6 +79,9 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
         if not flist:
             raise FileNotFoundError('no files found within time limits')
 
+        if isinstance(flist,Path): # so that we can iterate
+            flist = [flist]
+
 #%% preallocate, assuming all images the same size
     for f in flist: #find the first "good" file
         try:
