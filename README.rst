@@ -1,3 +1,6 @@
+.. image:: https://zenodo.org/badge/51016067.svg
+   :target: https://zenodo.org/badge/latestdoi/51016067
+
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org/
 .. image:: https://travis-ci.org/scienceopen/dascutils.svg?branch=master
