@@ -43,3 +43,10 @@ Make movies from DASC raw data files
 Plots all wavelengths in subplots::
 
     ./PlotDASC.py datadir
+
+Spatial registration (plate scale)
+==================================
+the ``cal/`` directory contains ``AZ`` and ``EL`` files corresponding to each pixel.
+Be sure you know if you're using magnetic north or geographic north, or you'll see a rotation by the declination.
+
+Note the date in the filename--perhaps the camera was moved since before or long after that date?
