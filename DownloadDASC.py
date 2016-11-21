@@ -2,7 +2,7 @@
 from dascutils import Path
 from time import sleep
 import ftplib
-from urllib.parse import urlparse
+from six.moves.urllib.parse import urlparse
 
 def getdasc(year,month,day,hour,minute,host,site,odir='',clobber=False):
     """
