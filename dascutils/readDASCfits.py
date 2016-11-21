@@ -3,6 +3,9 @@
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
+from six import PY2
+if PY2:
+    FileNotFoundError = OSError
 from warnings import filterwarnings # corrupt FITS files let off a flood of AstroPy warnings
 from astropy.io.fits.verify import VerifyWarning
 import logging
@@ -19,11 +22,15 @@ def readallDasc(indir,azfn,elfn,wl,minmax,tlim=None):
     returns Dasc images in list by wavelength, then by time
     """
 
-    img = []; times = []
+    img = []; times = []; wlused=[]
     for w in wl:
-        data,azel,sensorloc,time  = readCalFITS(indir,azfn,elfn,w,minmax,tlim)
-        img.append(data['image'])
-        times.append(time)
+        try:
+            data,azel,sensorloc,time  = readCalFITS(indir,azfn,elfn,w,minmax,tlim)
+            img.append(data['image'])
+            times.append(time)
+            wlused.append(w)
+        except FileNotFoundError:
+            pass
 #%% histogram
     try:
         az = azel[0]
@@ -31,7 +38,7 @@ def readallDasc(indir,azfn,elfn,wl,minmax,tlim=None):
     except Exception: #azel data wasn't loaded
         az=el=None
 
-    return img,times,az,el,sensorloc
+    return img,times,az,el,sensorloc,wlused
 
 def readCalFITS(indir,azfn,elfn,wl,minmax,tlim=None):
     indir = Path(indir).expanduser()
@@ -51,7 +58,8 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
     filterwarnings('ignore',category=VerifyWarning)
 
     if not flist:
-        return RuntimeError('No files were found to read')
+        raise FileNotFoundError('no files of this wavelength')
+
     flist = np.atleast_1d(flist)
 
     treq = totimestamp(treq)
@@ -71,12 +79,19 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
         if isinstance(treq,float) or len(treq) == 1: # single frame
             fi = np.nanargmin(abs(expstart-treq)) #index number in flist desired
         elif len(treq)==2: #frames within bounds
-            fi = (treq[0] <= expstart) & (expstart < treq[1])
+            if treq[0] is not None:
+                fi = (treq[0] <= expstart)
+                if treq[1] is not None:
+                    fi &= (expstart < treq[1])
+            elif treq[1] is not None:
+                fi = (expstart < treq[1])
+            else:
+                fi = slice(None)
         else:
-            raise ValueError('specify single time or min/max time')
+            fi = slice(None)
 
         flist = flist[fi]
-        if not flist:
+        if flist.size==0:
             raise FileNotFoundError('no files found within time limits')
 
         if isinstance(flist,Path): # so that we can iterate
@@ -127,7 +142,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
             img[i,...] =  np.rot90(I,-1) #NOTE: rotation to match online AVIs from UAF website. It's not transpose, and the cal file seems off.
             iok[i] = True
 
-        except IOError as e:
+        except (IOError,TypeError) as e:
             logging.info('{} has error {}'.format(fn,e))
 
 #%% keep only good times
