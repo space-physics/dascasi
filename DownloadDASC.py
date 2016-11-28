@@ -2,6 +2,7 @@
 from dascutils import Path
 from time import sleep
 import ftplib
+from datetime import datetime
 from six.moves.urllib.parse import urlparse
 
 def getdasc(year,month,day,hour,minute,host,site,odir='',clobber=False):
@@ -18,12 +19,17 @@ def getdasc(year,month,day,hour,minute,host,site,odir='',clobber=False):
         rpath = fpath + '/DASC/RAW/{:4d}/{:4d}{:02d}{:02d}'.format(year,year,month,day)
         F.cwd(rpath)
         dlist = F.nlst()
-
+        start = datetime(year, month, day, hour[0], minute[0]).timestamp()
+        stop = datetime(year, month, day, hour[1], minute[1]).timestamp()
         for f in dlist:
-#%% file in time range?
-            if ( hour[0] <= int(f[23:25]) <= hour[1] ) and ( minute[0] <= int(f[25:27]) <= minute[1] ):
+#%% file in time range
+            #print (int(round(float(f[27:31]))))
+            img_ts = datetime(int(f[14:18]), int(f[18:20]), int(f[20:22]),
+                              int(f[23:25]), int(f[25:27]), int(round(float(f[27:31])))%60).timestamp()
+            if (img_ts >= start) and (img_ts <= stop):
 #%% download file
                 ofn = Path(odir).expanduser() / f
+                print(ofn)
                 if not clobber:
                     if ofn.is_file(): #do filesizes match, if so, skip download
                         rsize = F.size(f)
