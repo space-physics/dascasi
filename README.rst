@@ -32,7 +32,7 @@ Download raw DASC files by time
 ===========================
 Example download October 7, 2015 from 8:23 to 8:54 UTC::
 
-    ./DownloadDASC.py 2015 10 7 8:23 8:54 
+    ./DownloadDASC.py 2015-10-07T08:23Z 2015-10-07T08:54Z 
     
 -o  download directory
 -c  clobber existing files
