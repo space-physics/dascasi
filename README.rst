@@ -32,7 +32,7 @@ Download raw DASC files by time
 ===========================
 Example download October 7, 2015 from 8:23 to 8:54 UTC::
 
-    ./DownloadDASC.py 2015 10 7 8:23 8:54 
+    ./DownloadDASC.py 2015-10-07T08:23Z 2015-10-07T08:54Z 
     
 -o  download directory
 -c  clobber existing files
@@ -43,3 +43,10 @@ Make movies from DASC raw data files
 Plots all wavelengths in subplots::
 
     ./PlotDASC.py datadir
+
+Spatial registration (plate scale)
+==================================
+the ``cal/`` directory contains ``AZ`` and ``EL`` files corresponding to each pixel.
+Be sure you know if you're using magnetic north or geographic north, or you'll see a rotation by the declination.
+
+Note the date in the filename--perhaps the camera was moved since before or long after that date?

@@ -17,7 +17,9 @@ def histdasc(img,wavelength,odir=None):
     creates per wavelength histograms
     the entries in list img correspond to wavelength, a 1-D array
     """
-    if odir: odir =Path(odir).expanduser()
+    if odir:
+        odir =Path(odir).expanduser()
+
     assert len(wavelength)==len(img) #works for 3-D img as well, assuming C-order.
 
     fg,axs = subplots(1,3,figsize=(15,5))

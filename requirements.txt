@@ -1,7 +1,8 @@
 setuptools
+nose
+pathlib2
 python-dateutil
 pytz
-nose
 numpy
 astropy
 scipy
