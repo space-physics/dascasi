@@ -3,17 +3,15 @@
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
-from six import PY2
-if PY2:
-    FileNotFoundError = OSError
+from pathlib import Path
 from warnings import filterwarnings # corrupt FITS files let off a flood of AstroPy warnings
 from astropy.io.fits.verify import VerifyWarning
 import logging
-from . import Path,totimestamp
 from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
 #
+from . import totimestamp#
 from histutils.fortrandates import forceutc
 
 

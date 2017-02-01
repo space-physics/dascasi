@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-from dascutils import Path
+from pathlib import Path
 from time import sleep
 import ftplib
 from pytz import UTC
 from datetime import datetime
 from dateutil.parser import parse
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 def getdasc(start,end,host,site,odir='',clobber=False):
     """
