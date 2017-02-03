@@ -1,4 +1,4 @@
-from . import Path
+from pathlib import Path
 from os import devnull
 from numpy import arange
 from pytz import UTC

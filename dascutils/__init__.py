@@ -1,10 +1,3 @@
-try:
-    from pathlib import Path
-    Path().expanduser()
-except (ImportError,AttributeError):
-    from pathlib2 import Path
-#%%
-from six import string_types,integer_types
 from dateutil.parser import parse
 from datetime import datetime
 from pytz import UTC
@@ -20,9 +13,9 @@ def totimestamp(t):
 
     if isinstance(t,datetime): # most cases devolve here
         t = (t-EPOCH).total_seconds()
-    elif isinstance(t,string_types):
+    elif isinstance(t,str):
         t = totimestamp(parse(t))
-    elif isinstance(t,(float,integer_types)):
+    elif isinstance(t,(float,int)):
         t = float(t)
         assert 1e9 < t < 3e9, 'did you really mean {}'.format(datetime.fromtimestamp(t,tz=UTC))
     elif isinstance(t,(tuple,list,ndarray)):
