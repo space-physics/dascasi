@@ -7,7 +7,7 @@ from datetime import datetime
 from dateutil.parser import parse
 from urllib.parse import urlparse
 #
-from histutils.fortrandates import forceutc
+from sciencedates import forceutc
 
 def getdasc(start,end,host,site,odir='',clobber=False):
     """

@@ -11,8 +11,9 @@ from astropy.io import fits
 import numpy as np
 from dateutil.parser import parse
 #
-from . import totimestamp#
-from histutils.fortrandates import forceutc
+from . import totimestamp
+#
+from sciencedates import forceutc
 
 
 def readallDasc(indir,azfn,elfn,wl,minmax,tlim=None):
