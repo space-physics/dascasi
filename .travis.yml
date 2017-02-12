@@ -6,6 +6,11 @@ notifications:
 git:
     depth: 3
 
+addons:
+  apt:
+    packages:
+      - gfortran
+
 matrix:
   include:    
 #    - os: osx
