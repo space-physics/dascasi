@@ -1,13 +1,8 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-try:
-    import conda.cli
-    conda.cli.main('install','--file','requirements.txt')
-except Exception as e:
-    print(e)
-    import pip
-    pip.main(['install','-r','requirements.txt'])
+req = ['nose','python-dateutil','pytz','numpy','astropy','scipy','matplotlib',
+        'sciencedates','themisasi',]
 
 setup(name='dascutils',
       author='Michael Hirsch, Ph.D.',
@@ -17,8 +12,7 @@ setup(name='dascutils',
       classifiers=[
       'Programming Language :: Python :: 3.6',
       ],
-	  install_requires=['sciencedates',
-	                    'themisasi',],
+      install_requires=req,
      dependency_links = [
         'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi'
 	],
