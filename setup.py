@@ -14,7 +14,7 @@ setup(name='dascutils',
       ],
       install_requires=req,
      dependency_links = [
-        'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi'
+        'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi-999.0.0'
 	],
       packages=['dascutils'],
 	  )
