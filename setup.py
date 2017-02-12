@@ -16,7 +16,7 @@ setup(name='dascutils',
      dependency_links = [
         'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi-999.0.0'
 	],
-      setup_requires=['numpy'], #for spacepy/themisasi
+#      setup_requires=['numpy'], #for spacepy/themisasi doesn't work
       packages=['dascutils'],
 	  )
 
