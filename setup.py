@@ -6,7 +6,7 @@ req = ['nose','python-dateutil','pytz','numpy','astropy','scipy','matplotlib',
 
 setup(name='dascutils',
       author='Michael Hirsch, Ph.D.',
-      url='https://github.com/scienceopen/dascutils',
+      url='https://github.com/scivision/dascutils',
       description='Utilities for UAF Digital All-Sky Camera: reading and plotting',
       version = '0.5',
       classifiers=[
@@ -14,7 +14,7 @@ setup(name='dascutils',
       ],
       install_requires=req,
      dependency_links = [
-        'https://github.com/scienceopen/themisasi/tarball/master#egg=themisasi-999.0.0'
+        'https://github.com/scivision/themisasi/tarball/master#egg=themisasi-999.0.0'
 	],
 #      setup_requires=['numpy'], #for spacepy/themisasi doesn't work
       packages=['dascutils'],
