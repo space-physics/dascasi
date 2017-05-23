@@ -142,7 +142,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
             iok[i] = True
 
         except (IOError,TypeError) as e:
-            logging.info('{} has error {}'.format(fn,e))
+            logging.info(f'{fn} has error {e}')
 
 #%% keep only good times
     img = img[iok,...]

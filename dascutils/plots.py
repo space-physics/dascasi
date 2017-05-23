@@ -31,8 +31,8 @@ def histdasc(img,wavelength,odir=None):
 
     if odir:
         ofn = odir/'DASChistogram.png'
-        print('writing {}'.format(ofn))
-        fg.savefig(str(ofn),bbox_inches='tight',dpi=100)
+        print('writing',ofn)
+        fg.savefig(str(ofn), bbox_inches='tight',dpi=100)
 
 def moviedasc(img,wavelength,times,odir,cadence,rows=None,cols=None):
 

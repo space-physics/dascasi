@@ -3,11 +3,11 @@
 
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org/
-.. image:: https://travis-ci.org/scienceopen/dascutils.svg?branch=master
-    :target: https://travis-ci.org/scienceopen/dascutils
+.. image:: https://travis-ci.org/scivision/dascutils.svg?branch=master
+    :target: https://travis-ci.org/scivision/dascutils
 
-.. image:: https://coveralls.io/repos/github/scienceopen/dascutils/badge.svg?branch=master 
-    :target: https://coveralls.io/github/scienceopen/dascutils?branch=master    
+.. image:: https://coveralls.io/repos/github/scivision/dascutils/badge.svg?branch=master 
+    :target: https://coveralls.io/github/scivision/dascutils?branch=master    
 
 ============
 DASC utils
