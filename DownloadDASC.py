@@ -1,13 +1,5 @@
 #!/usr/bin/env python
-from pathlib import Path
-from time import sleep
-import ftplib
-from pytz import UTC
-from datetime import datetime
 from dateutil.parser import parse
-from urllib.parse import urlparse
-#
-from sciencedates import forceutc
 #
 from dascutils import getdasc
 

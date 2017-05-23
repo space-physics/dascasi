@@ -1,7 +1,13 @@
+from pathlib import Path
+from time import sleep
+import ftplib
 from dateutil.parser import parse
 from datetime import datetime
+from urllib.parse import urlparse
 from pytz import UTC
 from numpy import ndarray,array
+#
+from sciencedates import forceutc
 
 EPOCH = datetime(1970,1,1,tzinfo=UTC)
 
@@ -32,6 +38,8 @@ def getdasc(start,end,host,site,odir='',clobber=False):
     year,month,day: integer
     hour, minute:  start,stop integer len == 2
     """
+    if isinstance(start,str): start=parse(start)
+    if isinstance(end,str): end = parse(end)
     start = forceutc(start)
     end   = forceutc(end)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 req = ['nose','python-dateutil','pytz','numpy','astropy','scipy','matplotlib']
-pipreq = ['sciencedates','themisasi']
+pipreq = ['sciencedates']
 
 import pip
 try:
@@ -24,6 +24,7 @@ setup(name='dascutils',
       'Topic :: Scientific/Engineering :: Atmospheric Science',
       'Programming Language :: Python :: 3.6',
       ],
+      extras_requires={'themisasi':['themisasi']}
 	  )
 
 
