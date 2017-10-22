@@ -24,7 +24,8 @@ setup(name='dascutils',
       'Topic :: Scientific/Engineering :: Atmospheric Science',
       'Programming Language :: Python :: 3.6',
       ],
-      extras_requires={'themisasi':['themisasi']}
+      extras_requires={'themisasi':['themisasi']},
+      install_requires=req+pipreq,
 	  )
 
 
