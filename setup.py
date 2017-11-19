@@ -20,6 +20,7 @@ setup(name='dascutils',
       extras_requires={'io':['themisasi'],
                        'plot':['matplotlib','scipy',],},
       install_requires=req,
+      python_requires='>=3.6',
 	  )
 
 
