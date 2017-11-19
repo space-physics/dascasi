@@ -3,11 +3,16 @@
 
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org/
+
 .. image:: https://travis-ci.org/scivision/dascutils.svg?branch=master
     :target: https://travis-ci.org/scivision/dascutils
 
 .. image:: https://coveralls.io/repos/github/scivision/dascutils/badge.svg?branch=master 
     :target: https://coveralls.io/github/scivision/dascutils?branch=master    
+
+.. image:: https://api.codeclimate.com/v1/badges/36b08deedc7d2bf750c8/maintainability
+   :target: https://codeclimate.com/github/scivision/dascutils/maintainability
+   :alt: Maintainability
 
 ============
 DASC utils
@@ -26,7 +31,7 @@ Install
 =======
 ::
 
-	python setup.py develop
+	pip install -e .
 	
 Download raw DASC files by time
 ===========================
