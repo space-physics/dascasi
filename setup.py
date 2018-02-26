@@ -11,7 +11,7 @@ setup(name='dascutils',
       url='https://github.com/scivision/dascutils',
       description='Utilities for UAF Digital All-Sky Camera: reading and plotting',
       long_description=open('README.rst').read(),
-      version = '0.5.1',
+      version = '1.0.0',
       classifiers=[
       'Intended Audience :: Science/Research',
       'Development Status :: 4 - Beta',
@@ -25,6 +25,7 @@ setup(name='dascutils',
       install_requires=install_requires,
       tests_require=tests_require,
       python_requires='>=3.6',
+      scripts=['DownloadDASC.py','PlotDASC.py']
 	  )
 
 

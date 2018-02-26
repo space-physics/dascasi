@@ -12,8 +12,8 @@ azfn = (R.parent/'cal/PKR_DASC_20110112_AZ_10deg.fits').resolve()
 elfn = (R.parent/'cal/PKR_DASC_20110112_EL_10deg.fits').resolve()
 
 assert fn.is_file(),f'could not find test data file {fn}'
-assert azfn.isfile(),f'could not find azimuth cal file {azfn}'
-assert elfn.isfile(),f'could not find elevation cal file {azfn}'
+assert azfn.is_file(),f'could not find azimuth cal file {azfn}'
+assert elfn.is_file(),f'could not find elevation cal file {azfn}'
 
 
 class BasicTest(unittest.TestCase):
@@ -25,11 +25,17 @@ class BasicTest(unittest.TestCase):
                                    (1325579522.0, 1325579532.0))
 
     def test_readdasc(self):
-
         img,times,az,el,sensorloc,wlused = du.readDASCfits.readallDasc(fn,azfn,elfn,None)
         assert isinstance(img[0], np.ndarray)
         assert img[0].shape == (1,512,512)
         assert sensorloc == {'lat': 65.126, 'lon': -147.479, 'alt_m': 200.0}
+
+
+    def test_getdasc(self):
+        du.getdasc(('2015-10-07T08:23:04','2015-10-07T08:23:06'),
+                'ftp://optics.gi.alaska.edu', 'PKR', R)
+
+
 
 if __name__ == '__main__':
     unittest.main()
