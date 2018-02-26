@@ -20,7 +20,7 @@ class BasicTest(unittest.TestCase):
                                    (1325579522.0, 1325579532.0))
 
     def test_readdasc(self):
-
+        assert fn.is_file(),f'could not find test data file {fn}'
         img,times,az,el,sensorloc,wlused = du.readDASCfits.readallDasc(fn,azfn,elfn,None)
         assert isinstance(img[0], np.ndarray)
         assert img[0].shape == (1,512,512)
