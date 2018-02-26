@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-req = ['nose','python-dateutil','pytz','numpy','astropy',
+install_requires = ['python-dateutil','pytz','numpy','astropy',
 'sciencedates']
+tests_require=['nose','coveralls']
 # %%
 from setuptools import setup, find_packages
 
@@ -9,7 +10,8 @@ setup(name='dascutils',
       author='Michael Hirsch, Ph.D.',
       url='https://github.com/scivision/dascutils',
       description='Utilities for UAF Digital All-Sky Camera: reading and plotting',
-      version = '0.5',
+      long_description=open('README.rst').read(),
+      version = '0.5.1',
       classifiers=[
       'Intended Audience :: Science/Research',
       'Development Status :: 4 - Beta',
@@ -19,7 +21,8 @@ setup(name='dascutils',
       ],
       extras_requires={'io':['themisasi'],
                        'plot':['matplotlib','scipy',],},
-      install_requires=req,
+      install_requires=install_requires,
+      tests_require=tests_require,
       python_requires='>=3.6',
 	  )
 

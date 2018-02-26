@@ -5,7 +5,6 @@ from dateutil.parser import parse
 from datetime import datetime
 from urllib.parse import urlparse
 from pytz import UTC
-from numpy import ndarray,array
 #
 from sciencedates import forceutc
 
@@ -16,6 +15,8 @@ def totimestamp(t):
     t may be None,float,int,datetime or list,tuple, ndarray of such
     output is ndarray of UTC Unix timestamp
     """
+    if t is None:
+        return
 
     if isinstance(t,datetime): # most cases devolve here
         t = t.timestamp()
@@ -24,14 +25,11 @@ def totimestamp(t):
     elif isinstance(t,(float,int)):
         t = float(t)
         assert 1e9 < t < 3e9, f'did you really mean {datetime.fromtimestamp(t,tz=UTC)}'
-    elif isinstance(t,(tuple,list,ndarray)):
-        t = array(map(totimestamp,t))
+    else: # assume it's an iterable 1-D vector
+        t = list(map(totimestamp,t))
 
     return t
 
-#print(totimestamp('2012-01-03T08:32:02Z'))
-#print(totimestamp(1325579522))
-#print(totimestamp(['2012-01-03T08:32:02Z','2012-01-03T08:32:12Z']))
 
 def getdasc(start,end,host,site,odir='',clobber=False):
     """

@@ -4,7 +4,7 @@ Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
 from pathlib import Path
-from warnings import filterwarnings # corrupt FITS files let off a flood of AstroPy warnings
+import warnings # corrupt FITS files let off a flood of AstroPy warnings
 from astropy.io.fits.verify import VerifyWarning
 import logging
 from astropy.io import fits
@@ -16,12 +16,13 @@ from . import totimestamp
 from sciencedates import forceutc
 
 
-def readallDasc(indir,azfn,elfn,wl,minmax,tlim=None):
+def readallDasc(indir,azfn,elfn,wl,minmax=None,tlim=None):
     """
     returns Dasc images in list by wavelength, then by time
     """
 
     img = []; times = []; wlused=[]
+    wl = np.atleast_1d(wl)
     for w in wl:
         try:
             data,azel,sensorloc,time  = readCalFITS(indir,azfn,elfn,w,minmax,tlim)
@@ -39,6 +40,7 @@ def readallDasc(indir,azfn,elfn,wl,minmax,tlim=None):
 
     return img,times,az,el,sensorloc,wlused
 
+
 def readCalFITS(indir,azfn,elfn,wl,minmax,tlim=None):
     indir = Path(indir).expanduser()
     if not wl:
@@ -46,20 +48,28 @@ def readCalFITS(indir,azfn,elfn,wl,minmax,tlim=None):
 
     #flist = []
     #for w in wl:
-    flist = sorted(indir.glob("PKR_DASC_0{}_*.FITS".format(wl)))
+    if indir.is_file():
+        flist = [indir]
+    elif indir.is_dir():
+        flist = sorted(indir.glob(f"PKR_DASC_0{wl}_*.FITS"))
+    else:
+        raise FileNotFoundError(f'{indir} not found')
+
     return readDASC(flist,azfn,elfn,minmax,tlim)
+
 
 def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
     """
-    filterwarnings('ignore',category=VerifyWarning)
+    warnings.filterwarnings('ignore', category=VerifyWarning)
 
     if not flist:
         raise FileNotFoundError('no files of this wavelength')
 
-    flist = np.atleast_1d(flist)
+    if isinstance(flist,(str,Path)):
+        flist = [flist]
 
     treq = totimestamp(treq)
 #%% read one file mode
@@ -99,7 +109,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
 #%% preallocate, assuming all images the same size
     for f in flist: #find the first "good" file
         try:
-            with fits.open(str(f),mode='readonly') as h:
+            with fits.open(f, mode='readonly') as h:
                 img = h[0].data
                 sensorloc={'lat':h[0].header['GLAT'],
                            'lon':h[0].header['GLON'],
@@ -116,7 +126,7 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
 #%% iterate over image files
     for i,fn in enumerate(flist):
         try:
-            with fits.open(str(fn),mode='readonly') as h:
+            with fits.open(fn, mode='readonly') as h:
                 expstart = forceutc(parse(h[0].header['OBSDATE'] + ' ' + h[0].header['OBSSTART'])).timestamp()
 
                 times[i,:] = [expstart,expstart + h[0].header['EXPTIME']] #EXPTIME is in seconds
@@ -157,9 +167,9 @@ def readDASC(flist,azfn=None,elfn=None,minmax=None,treq=None):
             'lambda':wavelen}
 
     if azfn is not None and elfn is not None:
-        with fits.open(str(Path(azfn).expanduser()),mode='readonly') as h:
+        with fits.open(Path(azfn).expanduser(),mode='readonly') as h:
             az = h[0].data
-        with fits.open(str(Path(elfn).expanduser()),mode='readonly') as h:
+        with fits.open(Path(elfn).expanduser(),mode='readonly') as h:
             el = h[0].data # NOTE: no rotation/flip
     else:
         az=el=None
