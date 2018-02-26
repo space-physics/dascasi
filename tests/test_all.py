@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 
 R = Path(__file__).parent
-fn = R/'PKR_DASC_0428_20151007_082305.930.FITS'
+fn = R/'PKR_DASC_0428_20151007_082305.930.FITS'.resolve()
 azfn = R.parent/'cal/PKR_DASC_20110112_AZ_10deg.fits'
 elfn = azfn = R.parent/'cal/PKR_DASC_20110112_EL_10deg.fits'
 
