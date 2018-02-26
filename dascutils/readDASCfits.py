@@ -16,7 +16,7 @@ from . import totimestamp
 from sciencedates import forceutc
 
 
-def readallDasc(indir,azfn,elfn,wl,minmax=None,tlim=None):
+def readallDasc(indir:Path, azfn:Path, elfn:Path, wl, minmax=None, tlim=None):
     """
     returns Dasc images in list by wavelength, then by time
     """
@@ -29,6 +29,16 @@ def readallDasc(indir,azfn,elfn,wl,minmax=None,tlim=None):
             img.append(data['image'])
             times.append(time)
             wlused.append(w)
+
+# FIXME future to use xarray
+           # img = xarray.DataArray(data['image'],
+           #                        coords={'time':time[:,0],
+           #                         'x':range(data['image'][0].shape[-1]),
+           #                         'y':range(data['image'][0].shape[-2]),
+            #                        },
+            #                       dims=['time','y','x'])
+
+            imgs.append(img)
         except FileNotFoundError:
             pass
 #%% histogram
@@ -37,6 +47,8 @@ def readallDasc(indir,azfn,elfn,wl,minmax=None,tlim=None):
         el = azel[1]
     except Exception: #azel data wasn't loaded
         az=el=None
+# %% prepare metadata
+    #imgs[0].attrs={'sensorloc':sensorloc,'az':az,'el':el} FIXME future xarray
 
     return img,times,az,el,sensorloc,wlused
 

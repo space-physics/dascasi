@@ -31,27 +31,36 @@ def totimestamp(t):
     return t
 
 
-def getdasc(start,end,host,site,odir='',clobber=False):
+def getdasc(startend,host,site,odir='',clobber=False):
     """
+    startend: tuple of datetime
     year,month,day: integer
     hour, minute:  start,stop integer len == 2
     """
-    if isinstance(start,str): start=parse(start)
-    if isinstance(end,str): end = parse(end)
-    start = forceutc(start)
-    end   = forceutc(end)
+    assert len(startend)==2
+
+    start = forceutc(startend[0])
+    end   = forceutc(startend[1])
 
     parsed = urlparse(host)
     ftop = parsed[1]
     fpath = parsed[2] + site
     odir = Path(odir).expanduser()
-    print('downloading to', odir.resolve())
 #%% get available files for this day
-    rpath = f'{fpath}/DASC/RAW/{start.year:4d}/{start.year:4d}{start.month:02d}{start.day:02d}'
+    rparent = f'{fpath}/DASC/RAW/{start.year:4d}'
+    rday = f'{start.year:4d}{start.month:02d}{start.day:02d}'
 
     with ftplib.FTP(ftop,'anonymous','guest',timeout=15) as F:
-        F.cwd(rpath)
+        F.cwd(rparent)
         dlist = F.nlst()
+        if not rday in dlist:
+            raise FileNotFoundError(f'{rday} does not exist under {host}/{rparent}')
+
+        print('downloading to', odir.resolve())
+        F.cwd(rday)
+        dlist = F.nlst()
+
+        print(f'remote filesize approx. {F.size(dlist[0])/1000} kB.')
         for f in dlist:
 #%% file in time range
             #print (int(round(float(f[27:31]))))
