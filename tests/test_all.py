@@ -6,9 +6,14 @@ import unittest
 import numpy as np
 
 R = Path(__file__).parent
+# .resolve() was added for Travis-CI debugging, not necessary
 fn = (R/'PKR_DASC_0428_20151007_082305.930.FITS').resolve()
-azfn = R.parent/'cal/PKR_DASC_20110112_AZ_10deg.fits'
-elfn = azfn = R.parent/'cal/PKR_DASC_20110112_EL_10deg.fits'
+azfn = (R.parent/'cal/PKR_DASC_20110112_AZ_10deg.fits').resolve()
+elfn = (R.parent/'cal/PKR_DASC_20110112_EL_10deg.fits').resolve()
+
+assert fn.is_file(),f'could not find test data file {fn}'
+assert azfn.isfile(),f'could not find azimuth cal file {azfn}'
+assert elfn.isfile(),f'could not find elevation cal file {azfn}'
 
 
 class BasicTest(unittest.TestCase):
@@ -20,7 +25,7 @@ class BasicTest(unittest.TestCase):
                                    (1325579522.0, 1325579532.0))
 
     def test_readdasc(self):
-        assert fn.is_file(),f'could not find test data file {fn}'
+
         img,times,az,el,sensorloc,wlused = du.readDASCfits.readallDasc(fn,azfn,elfn,None)
         assert isinstance(img[0], np.ndarray)
         assert img[0].shape == (1,512,512)
