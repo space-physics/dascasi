@@ -37,8 +37,7 @@ def readallDasc(indir:Path, azfn:Path, elfn:Path, wl, minmax=None, tlim=None):
            #                         'y':range(data['image'][0].shape[-2]),
             #                        },
             #                       dims=['time','y','x'])
-
-            imgs.append(img)
+            #imgs.append(img)
         except FileNotFoundError:
             pass
 #%% histogram

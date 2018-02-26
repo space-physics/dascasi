@@ -4,7 +4,6 @@ Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS fil
 
 This program by default projects HiST auroral tomography system FOV onto PFRR DASC.
 """
-
 from dascutils.readDASCfits import readallDasc
 from dascutils.plots import histdasc,moviedasc
 
@@ -29,6 +28,6 @@ if __name__ == '__main__':
 
 
 
-    img,times,waz,wel,wlla,wwl = readallDasc(p.indir,p.azfn,p.elfn,p.wavelength,p.minmax,p.tlim)
+    img,times,waz,wel,wlla,wwl = readallDasc(p.indir, p.azfn, p.elfn, p.wavelength, p.minmax, p.tlim)
 
-    plotdasc(img,wwl,p.odir,p.cadence,None,None)
+    plotdasc(img, wwl, p.odir, p.cadence, None, None)
