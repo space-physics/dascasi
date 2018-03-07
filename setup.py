@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 install_requires = ['python-dateutil','pytz','numpy','astropy',
 'sciencedates']
-tests_require=['nose','coveralls']
+tests_require=['pytest','nose','coveralls']
 # %%
 from setuptools import setup, find_packages
 
