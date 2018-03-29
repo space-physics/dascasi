@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-from dateutil.parser import parse
-#
-from dascutils import getdasc
+import dascutils as du
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -14,6 +12,4 @@ if __name__ == '__main__':
     p = p.parse_args()
 
 #host = "ftp://mirrors.arsc.edu/AMISR/PKR/DASC/RAW/"
-    startend = [parse(t) for t in p.startend]
-
-    getdasc(startend, p.host,p.site, p.odir, p.clobber)
+    du.download(p.startend, p.host,p.site, p.odir, p.clobber)

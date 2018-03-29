@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-install_requires = ['python-dateutil','pytz','numpy','astropy',
-                    'sciencedates']
+install_requires = ['python-dateutil','numpy>=1.13','astropy','xarray']
 tests_require=['pytest','nose','coveralls']
 # %%
 from setuptools import setup, find_packages
@@ -11,7 +10,7 @@ setup(name='dascutils',
       url='https://github.com/scivision/dascutils',
       description='Utilities for UAF Digital All-Sky Camera: reading and plotting',
       long_description=open('README.rst').read(),
-      version = '1.0.0',
+      version = '1.1.0',
       classifiers=[
       'Development Status :: 4 - Beta',
       'Environment :: Console',

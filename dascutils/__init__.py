@@ -4,11 +4,9 @@ import ftplib
 from dateutil.parser import parse
 from datetime import datetime
 from urllib.parse import urlparse
-from pytz import UTC
 #
-from sciencedates import forceutc
+from .io import load # noqa: F401
 
-EPOCH = datetime(1970,1,1,tzinfo=UTC)
 
 def totimestamp(t):
     """
@@ -24,14 +22,14 @@ def totimestamp(t):
         t = totimestamp(parse(t))
     elif isinstance(t,(float,int)):
         t = float(t)
-        assert 1e9 < t < 3e9, f'did you really mean {datetime.fromtimestamp(t,tz=UTC)}'
+        assert 1e9 < t < 3e9, f'did you  mean {datetime.fromtimestamp(t)}'
     else: # assume it's an iterable 1-D vector
         t = list(map(totimestamp,t))
 
     return t
 
 
-def getdasc(startend,host,site,odir='',clobber=False):
+def download(startend,host,site,odir='',clobber=False):
     """
     startend: tuple of datetime
     year,month,day: integer
@@ -39,13 +37,13 @@ def getdasc(startend,host,site,odir='',clobber=False):
     """
     assert len(startend)==2
 
-    start = forceutc(startend[0])
-    end   = forceutc(startend[1])
+    start = parse(startend[0]) if isinstance(startend[0],str) else startend[0]
+    end   = parse(startend[1]) if isinstance(startend[1],str) else startend[1]
 
     parsed = urlparse(host)
     ftop = parsed[1]
     fpath = parsed[2] + site
-    odir = Path(odir).expanduser()
+    odir = Path(odir).expanduser().resolve()
 #%% get available files for this day
     rparent = f'{fpath}/DASC/RAW/{start.year:4d}'
     rday = f'{start.year:4d}{start.month:02d}{start.day:02d}'
@@ -56,7 +54,7 @@ def getdasc(startend,host,site,odir='',clobber=False):
         if not rday in dlist:
             raise FileNotFoundError(f'{rday} does not exist under {host}/{rparent}')
 
-        print('downloading to', odir.resolve())
+        print('downloading to', odir)
         F.cwd(rday)
         dlist = F.nlst()
 
@@ -64,7 +62,7 @@ def getdasc(startend,host,site,odir='',clobber=False):
         for f in dlist:
 #%% file in time range
             #print (int(round(float(f[27:31]))))
-            t = forceutc(datetime.strptime(f[14:-9],'%Y%m%d_%H%M%S'))
+            t = datetime.strptime(f[14:-9],'%Y%m%d_%H%M%S')
             if  start <= t <= end:
 #%% download file
                 ofn = odir / f
