@@ -140,8 +140,17 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
 def loadcal(azfn:Path, elfn:Path) -> tuple:
 
     with fits.open(Path(azfn).expanduser(),mode='readonly') as h:
-        az = (('y','x'),h[0].data)
+        az = h[0].data
+    bad = az==0
+
     with fits.open(Path(elfn).expanduser(),mode='readonly') as h:
-        el = (('y','x'),h[0].data)
+        el = h[0].data
+    bad &= el==0.
+
+    el[bad] = np.nan
+    az[bad] = np.nan
+
+    el = (('y','x'),el)
+    az = (('y','x'),az)
 
     return az,el
