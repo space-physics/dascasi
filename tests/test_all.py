@@ -30,7 +30,9 @@ def test_lost():
     assert isinstance(data, xarray.Dataset)
     assert 428 in data.data_vars
     assert data[428].shape == (1,512,512)
-    assert data.sensorloc == {'lat': 65.126, 'lon': -147.479, 'alt_m': 200.0}
+    assert data.lat == 65.126
+    assert data.lon == -147.479
+    assert data.alt_m == 200.0
     assert data.time.values == datetime(2015, 10, 7, 8, 23, 5, 930000)
 # %% single time request
     data = du.load(fn,azfn,elfn,'2012-01-03T08:32:02')

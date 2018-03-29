@@ -90,7 +90,7 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
 
                 wavelen.append(int(h[0].header['FILTWAV']))
 
-                sensorloc={'lat':h[0].header['GLAT'],
+                lla={'lat':h[0].header['GLAT'],
                            'lon':h[0].header['GLON'],
                            'alt_m':200.} # TODO use real altitude
 
@@ -127,7 +127,7 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
     data = xarray.Dataset(ds,
                           coords={'time':time[:,0]},
                           attrs={'timeend':time[:,1],
-                                 'sensorloc':sensorloc})
+                                 'lat':lla['lat'],'lon':lla['lon'],'alt_m':lla['alt_m']})
 
     if azfn is not None and elfn is not None:
         az,el = loadcal(azfn, elfn)
