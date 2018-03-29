@@ -91,8 +91,8 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
                 wavelen.append(int(h[0].header['FILTWAV']))
 
                 lla={'lat':h[0].header['GLAT'],
-                           'lon':h[0].header['GLON'],
-                           'alt_m':200.} # TODO use real altitude
+                     'lon':h[0].header['GLON'],
+                     'alt_m':200.} # TODO use real altitude
 
                 """
                 DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
