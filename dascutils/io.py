@@ -130,10 +130,18 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
                                  'sensorloc':sensorloc})
 
     if azfn is not None and elfn is not None:
-        with fits.open(Path(azfn).expanduser(),mode='readonly') as h:
-            data['az'] = (('y','x'),h[0].data)
-        with fits.open(Path(elfn).expanduser(),mode='readonly') as h:
-            data['el'] = (('y','x'),h[0].data)
-
+        az,el = loadcal(azfn, elfn)
+        data['az'] = az
+        data['el'] = el
 
     return data
+
+
+def loadcal(azfn:Path, elfn:Path) -> tuple:
+
+    with fits.open(Path(azfn).expanduser(),mode='readonly') as h:
+        az = (('y','x'),h[0].data)
+    with fits.open(Path(elfn).expanduser(),mode='readonly') as h:
+        el = (('y','x'),h[0].data)
+
+    return az,el
