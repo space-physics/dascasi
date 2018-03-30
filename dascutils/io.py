@@ -156,6 +156,12 @@ def loadcal(azfn:Path, elfn:Path) -> tuple:
     el[bad] = np.nan
     az[bad] = np.nan
 
+    if (np.nanmax(el) > 90) or (np.nanmin(el) < 0):
+        raise ValueError(' 0 < elevation < 90 degrees.')
+
+    if (np.nanmax(az) > 360) or (np.nanmin(az) < 0):
+        raise ValueError(' 0 < azimuth < 360 degrees.')
+
     el = (('y','x'),el)
     az = (('y','x'),az)
 
