@@ -139,11 +139,17 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
 
 def loadcal(azfn:Path, elfn:Path) -> tuple:
 
-    with fits.open(Path(azfn).expanduser(),mode='readonly') as h:
+    azfn = Path(azfn).expanduser()
+    elfn = Path(elfn).expanduser()
+
+    if azfn.samefile(elfn):
+        raise ValueError('Az and El are the same file!')
+
+    with fits.open(azfn, mode='readonly') as h:
         az = h[0].data
     bad = az==0
 
-    with fits.open(Path(elfn).expanduser(),mode='readonly') as h:
+    with fits.open(elfn, mode='readonly') as h:
         el = h[0].data
     bad &= el==0.
 
