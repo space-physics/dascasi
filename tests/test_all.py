@@ -7,6 +7,7 @@ from datetime import datetime
 from numpy.testing import assert_allclose
 #
 import dascutils as du
+import dascutils.io as dio
 
 R = Path(__file__).parent
 
@@ -26,7 +27,7 @@ def test_timestamp():
                                    (1325579522.0, 1325579532.0))
 
 def test_lost():
-    data = du.load(fn,azfn,elfn)
+    data = dio.load(fn,azfn,elfn)
     assert isinstance(data, xarray.Dataset)
     assert 428 in data.data_vars
     assert data[428].shape == (1,512,512)
@@ -35,13 +36,13 @@ def test_lost():
     assert data.alt_m == 200.0
     assert data.time.values == datetime(2015, 10, 7, 8, 23, 5, 930000)
 # %% single time request
-    data = du.load(fn,azfn,elfn,'2012-01-03T08:32:02')
+    data = dio.load(fn,azfn,elfn,'2012-01-03T08:32:02')
     assert data[428].shape == (1,512,512)
 # %% multi-time request
-    data = du.load(fn,azfn,elfn,('2012-01-03T08:32:02','2016-01-04'))
+    data = dio.load(fn,azfn,elfn,('2012-01-03T08:32:02','2016-01-04'))
     assert data[428].shape == (1,512,512)
 # %% wavelength request
-    data = du.load(fn,azfn,elfn,None,428)
+    data = dio.load(fn,azfn,elfn,None,428)
     assert data[428].shape == (1,512,512)
 
 

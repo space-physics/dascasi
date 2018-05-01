@@ -12,6 +12,7 @@ import numpy as np
 from datetime import timedelta
 from dateutil.parser import parse
 import xarray
+from typing import Tuple
 
 
 def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:list=None) -> xarray.Dataset:
@@ -137,7 +138,8 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
     return data
 
 
-def loadcal(azfn:Path, elfn:Path) -> tuple:
+def loadcal(azfn:Path, elfn:Path) -> Tuple[np.ndarray,np.ndarray]:
+    """Load DASC plate scale (degrees/pixel)"""
 
     azfn = Path(azfn).expanduser()
     elfn = Path(elfn).expanduser()
@@ -162,7 +164,7 @@ def loadcal(azfn:Path, elfn:Path) -> tuple:
     if (np.nanmax(az) > 360) or (np.nanmin(az) < 0):
         raise ValueError(' 0 < azimuth < 360 degrees.')
 
-    el = (('y','x'),el)
-    az = (('y','x'),az)
+    el = (('y','x'), el)
+    az = (('y','x'), az)
 
     return az,el

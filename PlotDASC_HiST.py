@@ -4,7 +4,7 @@ Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS fil
 
 This program by default projects HiST auroral tomography system FOV onto PFRR DASC.
 """
-import dascutils as du
+import dascutils.io as dio
 import dascutils.plots as dup
 #
 from themisasi.fov import mergefov
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     try:
         plothstfovondasc(img, p.wavelength,p.odir,p.cadence,rows,cols)
     except NameError:
-        imgs = du.load(p.indir, p.azfn, p.elfn, p.tlim, p.wavelength,)
+        imgs = dio.load(p.indir, p.azfn, p.elfn, p.tlim, p.wavelength,)
         rows,cols = mergefov(ocalfn,None,None,p.ncal,p.projalt,site='DASC')
 
-        plothstfovondasc(img,p.wavelength,p.odir,p.cadence,rows,cols)
+        plothstfovondasc(imgs, p.wavelength,p.odir,p.cadence,rows,cols)

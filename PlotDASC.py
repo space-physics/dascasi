@@ -7,7 +7,7 @@ This program by default projects HiST auroral tomography system FOV onto PFRR DA
 from pathlib import Path
 import xarray
 #
-import dascutils as du
+import dascutils.io as dio
 import dascutils.plots as dup
 
 def plotdasc(img:xarray.Dataset, odir:Path, cadence:float):
@@ -31,6 +31,6 @@ if __name__ == '__main__':
 
 
 
-    imgs = du.load(p.indir, p.azfn, p.elfn, p.tlim, p.wavelength)
+    imgs = dio.load(p.indir, p.azfn, p.elfn, p.tlim, p.wavelength)
 
     plotdasc(imgs, p.odir, p.cadence)

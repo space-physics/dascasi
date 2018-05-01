@@ -4,8 +4,6 @@ import ftplib
 from dateutil.parser import parse
 from datetime import datetime
 from urllib.parse import urlparse
-#
-from .io import load,loadcal # noqa: F401
 
 
 def totimestamp(t):
