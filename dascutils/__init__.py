@@ -42,6 +42,8 @@ def download(startend,host,site,odir='',clobber=False):
     ftop = parsed[1]
     fpath = parsed[2] + site
     odir = Path(odir).expanduser().resolve()
+    if not odir.is_dir():
+        raise FileNotFoundError(f'{odir} does not exist')
 #%% get available files for this day
     rparent = f'{fpath}/DASC/RAW/{start.year:4d}'
     rday = f'{start.year:4d}{start.month:02d}{start.day:02d}'
