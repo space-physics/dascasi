@@ -144,6 +144,8 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
         az,el = loadcal(azfn, elfn)
         data['az'] = az
         data['el'] = el
+        
+    data.attrs['filename'] = ' '.join((p.name for p in flist))
 
     return data
 
