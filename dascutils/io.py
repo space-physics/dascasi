@@ -83,18 +83,26 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
     time = []; img= [];  wavelen = []
     for i,fn in enumerate(flist):
         try:
-            with fits.open(fn, mode='readonly') as h:
+            with fits.open(fn, mode='readonly', memmap=False) as h:
                 assert h[0].header['BITPIX']==16,'this function assumes unsigned 16-bit data'
-                expstart = parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART'])
+                if 'OBSDATE' in h[0].header and 'EXPTIME' in h[0].header:
+                     time.append(parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART']))
+#                    expstart = parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART'])
+#                    time.append((expstart, expstart + timedelta(seconds=h[0].header['EXPTIME']))) #EXPTIME is in seconds
+                elif 'FRAME' in h[0].header: #old DASC files
+                    time.append(parse(h[0].header['FRAME']))
 
-                time.append((expstart, expstart + timedelta(seconds=h[0].header['EXPTIME']))) #EXPTIME is in seconds
+                try:
+                    wavelen.append(int(h[0].header['FILTWAV']))
+                except KeyError:
+                    pass
 
-                wavelen.append(int(h[0].header['FILTWAV']))
-
-                lla={'lat':h[0].header['GLAT'],
-                     'lon':h[0].header['GLON'],
-                     'alt_m':200.} # TODO use real altitude
-
+                try:
+                    lla={'lat':h[0].header['GLAT'],
+                         'lon':h[0].header['GLON'],
+                         'alt_m':200.} # TODO use real altitude
+                except KeyError:
+                    lla = None
                 """
                 DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
                 just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
@@ -104,9 +112,8 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
                 Further, there was a RAID failure that filled the data files with random values.
                 Don Hampton says about 90% of data OK, but 10% NOK.
                 """
-
                 I = np.rot90(h[0].data,-1) #NOTE: rotation to match online AVIs from UAF website. It's not transpose, and the cal file seems off.
-                if not 'BZERO' in h[0].header.keys():
+                if not 'BZERO' in h[0].header:
                     I[I>16384] = 0 #extreme, corrupted data
                     I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
 
@@ -126,9 +133,12 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
         ds[w] = (('time','y','x'),img[wavelen==w,...])
 
     data = xarray.Dataset(ds,
-                          coords={'time':time[:,0]},
-                          attrs={'timeend':time[:,1],
-                                 'lat':lla['lat'],'lon':lla['lon'],'alt_m':lla['alt_m']})
+                          coords={'time':time},)
+ #                         attrs={#'timeend':time[:,1],
+    if lla is not None:
+        data.attrs['lat']=lla['lat']
+        data.attrs['lon']=lla['lon']
+        data.attrs['alt_m']=lla['alt_m']
 
     if azfn is not None and elfn is not None:
         az,el = loadcal(azfn, elfn)
