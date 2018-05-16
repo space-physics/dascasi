@@ -144,7 +144,7 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
         az,el = loadcal(azfn, elfn)
         data['az'] = az
         data['el'] = el
-        
+
     data.attrs['filename'] = ' '.join((p.name for p in flist))
 
     return data
@@ -170,11 +170,8 @@ def loadcal(azfn:Path, elfn:Path) -> Tuple[np.ndarray,np.ndarray]:
     el[bad] = np.nan
     az[bad] = np.nan
 
-    if (np.nanmax(el) > 90) or (np.nanmin(el) < 0):
-        raise ValueError(' 0 < elevation < 90 degrees.')
-
-    if (np.nanmax(az) > 360) or (np.nanmin(az) < 0):
-        raise ValueError(' 0 < azimuth < 360 degrees.')
+    assert np.nanmax(el) <= 90  and np.nanmin(el) >= 0, '0 < elevation < 90 degrees.'
+    assert np.nanmax(az) <= 360 and np.nanmin(az) >= 0, '0 < azimuth < 360 degrees.'
 
     el = (('y','x'), el)
     az = (('y','x'), az)
