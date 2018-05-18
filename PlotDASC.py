@@ -2,7 +2,10 @@
 """
 Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS files
 
-This program by default projects HiST auroral tomography system FOV onto PFRR DASC.
+example:
+python PlotDASC.py tests/PKR_DASC_0428_20151007_082305.930.FITS
+azfn = R.parent/'cal/PKR_DASC_20110112_AZ_10deg.fits
+elfn = R.parent/'cal/PKR_DASC_20110112_EL_10deg.fits
 """
 from pathlib import Path
 import xarray
