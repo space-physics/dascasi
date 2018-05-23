@@ -163,10 +163,10 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
             if data is None:
                 data = d
             else:
-                data = xarray.merge((data,d))
+                data = xarray.merge((data,d), join='outer')
 
 
- #                         attrs={#'timeend':time[:,1],
+
     if lla is not None:
         data.attrs['lat']=lla['lat']
         data.attrs['lon']=lla['lon']
