@@ -9,13 +9,14 @@ from astropy.io.fits.verify import VerifyWarning
 import logging
 from astropy.io import fits
 import numpy as np
-from datetime import timedelta
+from datetime import datetime
 from dateutil.parser import parse
 import xarray
 from typing import Tuple
 
 
-def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:list=None) -> xarray.Dataset:
+def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, 
+         wavelenreq:list=None, verbose=False) -> xarray.Dataset:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
@@ -29,53 +30,55 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
         flist = list(flist.glob('*.FITS')) + list(flist.glob('*.fits'))
         flist = sorted(flist)
 
-    flist = np.atleast_1d(flist)
-
+    flist = np.unique(flist)
     if treq is not None or wavelenreq is not None:
-        time = []; wavelen=[]
+        time = []; wavelen=[]; flist1=[]
         for i,fn in enumerate(flist):
             try:
                 with fits.open(fn, mode='readonly') as h:
-                    time.append(parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART']))
-                    wavelen.append(int(h[0].header['FILTWAV']))
+                    # New DASC
+                    if 'OBSDATE' in h[0].header:
+                        time.append(parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART']))
+                        wavelen.append(int(h[0].header['FILTWAV']))
+                        flist1.append(fn)
+                    # Old DASC has differnent header
+                    else:
+                        time.append(parse(h[0].header['FRAME']))
+                        wavelen.append(0)
+                        flist1.append(fn)
             except OSError: #many corrupted files, accounted for by preallocated vectors
                 pass
-
+        flist = np.array(flist1)
         time = np.array(time)
         wavelen = np.array(wavelen)
+        print ('Wavelenghts detected in the folder: {}'.format(np.unique(wavelen)))
 #%% time request
     if treq is not None:
         if isinstance(treq,str):
             treq = parse(treq)
         elif isinstance(treq,(np.ndarray,tuple,list)) and isinstance(treq[0],str):
             treq = list(map(parse,treq))
-        treq = np.atleast_1d(treq)
+        elif isinstance(treq,(np.ndarray,tuple,list)) and isinstance(treq[0],datetime):
+            pass
+        if isinstance(treq,list):
+            treq = np.array(treq)
 # %% time slice
         if treq.size == 1: # single frame
             i = abs(time-treq).argmin() #index number in flist desired
         elif treq.size == 2: #frames within bounds
             if treq[0] is not None:
-                i = (treq[0] <= time)
-                if treq[1] is not None:
-                    i &= (time < treq[1])
-            elif treq[1] is not None:
-                i = (time < treq[1])
-            else:
-                i = slice(None)
-        else:
-            i = slice(None)
+                i = np.where( (time>=treq[0]) & (time<=treq[1]) )[0]
 
         if isinstance(i,np.ndarray) and not i.any():
             raise ValueError(f'no valid data found in {treq}')
-
-        flist   = np.atleast_1d(flist[i])
-        wavelen = np.atleast_1d(wavelen[i])
+        flist = flist[i]
+        wavelen = wavelen[i]
         if len(flist)==0:
             raise FileNotFoundError(f'no files found within time limits {treq}')
 # %% wavelength slice
     if wavelenreq is not None:
         i = np.isin(wavelen, wavelenreq)
-        flist = np.atleast_1d(flist[i])
+        flist = flist[i]
 
     if len(flist)==0:
         raise FileNotFoundError(f'no files found with wavelength(s) {wavelenreq}')
@@ -84,14 +87,15 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
     for i,fn in enumerate(flist):
         try:
             with fits.open(fn, mode='readonly', memmap=False) as h:
+                if verbose and i == 0:
+                    print ('Number of files: ',len(flist))
+                    print (h[0].header)
                 assert h[0].header['BITPIX']==16,'this function assumes unsigned 16-bit data'
                 if 'OBSDATE' in h[0].header and 'EXPTIME' in h[0].header:
                      time.append(parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART']))
-#                    expstart = parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART'])
-#                    time.append((expstart, expstart + timedelta(seconds=h[0].header['EXPTIME']))) #EXPTIME is in seconds
                 elif 'FRAME' in h[0].header: #old DASC files
                     time.append(parse(h[0].header['FRAME']))
-
+                    wavelen.append(0)
                 try:
                     wavelen.append(int(h[0].header['FILTWAV']))
                 except KeyError:
@@ -102,7 +106,10 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
                          'lon':h[0].header['GLON'],
                          'alt_m':200.} # TODO use real altitude
                 except KeyError:
-                    lla = None
+                    # Hard coded for Poker Flat
+                    lla = {'lat':65.12992,
+                         'lon':-147.47104,
+                         'alt_m':200.}
                 """
                 DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
                 just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
@@ -112,7 +119,8 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
                 Further, there was a RAID failure that filled the data files with random values.
                 Don Hampton says about 90% of data OK, but 10% NOK.
                 """
-                I = np.rot90(h[0].data,-1) #NOTE: rotation to match online AVIs from UAF website. It's not transpose, and the cal file seems off.
+                # Az == 0 toward east. Rot90 to match the north=0deg.
+                I = np.rot90(h[0].data) #NOTE: to match the online AVIs from UAF website, rotate the file with np.rot90(I,-1).
                 if not 'BZERO' in h[0].header:
                     I[I>16384] = 0 #extreme, corrupted data
                     I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
@@ -127,14 +135,17 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
     time = np.array(time)
     wavelen = np.array(wavelen)
     wavelengths = np.unique(wavelen)
-
     ds = {}
-    for w in wavelengths:
-        ds[w] = (('time','y','x'),img[wavelen==w,...])
+    if wavelengths.shape[0] == 1 and wavelengths[0] == 0:
+        img = img[:,:,0,:]
+        ds[0] = (('time','y','x'),img[wavelen==0,...])
+    else:
+        for w in wavelengths:
+            print (img[wavelen==w,...].shape)
+            ds[w] = (('time','y','x'),img[wavelen==w,...])
 
     data = xarray.Dataset(ds,
                           coords={'time':time},)
- #                         attrs={#'timeend':time[:,1],
     if lla is not None:
         data.attrs['lat']=lla['lat']
         data.attrs['lon']=lla['lon']
@@ -142,8 +153,8 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None, wavelenreq:
 
     if azfn is not None and elfn is not None:
         az,el = loadcal(azfn, elfn)
-        data['az'] = az
-        data['el'] = el
+        data.attrs['az']=az
+        data.attrs['el']=el
 
     data.attrs['filename'] = ' '.join((p.name for p in flist))
 
@@ -165,7 +176,7 @@ def loadcal(azfn:Path, elfn:Path) -> Tuple[np.ndarray,np.ndarray]:
 
     with fits.open(elfn, mode='readonly') as h:
         el = h[0].data
-    bad &= el==0.
+    bad &= el==0
 
     el[bad] = np.nan
     az[bad] = np.nan
