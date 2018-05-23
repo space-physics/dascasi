@@ -9,6 +9,7 @@ elfn = R.parent/'cal/PKR_DASC_20110112_EL_10deg.fits
 """
 from pathlib import Path
 import xarray
+from matplotlib.pyplot import show
 #
 import dascutils.io as dio
 import dascutils.plots as dup
@@ -37,3 +38,5 @@ if __name__ == '__main__':
     imgs = dio.load(p.indir, p.azfn, p.elfn, p.tlim, p.wavelength)
 
     plotdasc(imgs, p.odir, p.cadence)
+
+    show()
