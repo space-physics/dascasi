@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-install_requires = ['python-dateutil','numpy>=1.13','astropy','xarray','scikit-image']
+install_requires = ['python-dateutil','numpy>=1.13','astropy','xarray',
+                    'scikit-image','scipy']  # windows scikit-image requires scipy.
 tests_require=['pytest','nose','coveralls']
 # %%
 from setuptools import setup, find_packages
