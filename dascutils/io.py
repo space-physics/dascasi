@@ -205,7 +205,7 @@ def loadcal(azfn:Path, elfn:Path) -> Tuple[np.ndarray,np.ndarray]:
     assert np.nanmax(el) <= 90  and np.nanmin(el) >= 0, '0 < elevation < 90 degrees.'
     assert np.nanmax(az) <= 360 and np.nanmin(az) >= 0, '0 < azimuth < 360 degrees.'
 
-    el = (('y','x'), el)
-    az = (('y','x'), az)
+    el = xarray.DataArray(el, dims=['y','x'])
+    az = xarray.DataArray(az, dims=['y','x'])
 
     return az,el
