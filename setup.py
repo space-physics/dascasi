@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-install_requires = ['python-dateutil','numpy>=1.13','astropy','xarray']
+install_requires = ['python-dateutil','numpy>=1.13','astropy','xarray','scikit-image']
 tests_require=['pytest','nose','coveralls']
 # %%
 from setuptools import setup, find_packages
