@@ -172,9 +172,9 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
         data.attrs['lon']=lla['lon']
 
     if azfn is not None and elfn is not None:
-        az,el = loadcal(azfn, elfn)
-        data['az'] = az
-        data['el'] = el
+        azel = loadcal(azfn, elfn)
+        data['az'] = azel['az']
+        data['el'] = azel['el']
 
     data.attrs['filename'] = ' '.join((p.name for p in flist))
     data.attrs['wavelength'] = wavelen
@@ -182,7 +182,7 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
     return data
 
 
-def loadcal(azfn:Path, elfn:Path) -> Tuple[xarray.DataArray, xarray.DataArray]:
+def loadcal(azfn:Path, elfn:Path) -> xarray.Dataset:
     """Load DASC plate scale (degrees/pixel)"""
 
     azfn = Path(azfn).expanduser()
@@ -205,7 +205,7 @@ def loadcal(azfn:Path, elfn:Path) -> Tuple[xarray.DataArray, xarray.DataArray]:
     assert np.nanmax(el) <= 90  and np.nanmin(el) >= 0, '0 < elevation < 90 degrees.'
     assert np.nanmax(az) <= 360 and np.nanmin(az) >= 0, '0 < azimuth < 360 degrees.'
 
-    el = xarray.DataArray(el, dims=['y','x'])
-    az = xarray.DataArray(az, dims=['y','x'])
+    azel = xarray.Dataset({'el':(('y','x'),el),
+                           'az':(('y','x'),az)})
 
-    return az,el
+    return azel
