@@ -10,7 +10,7 @@ setup(name='dascutils',
       url='https://github.com/scivision/dascutils',
       description='Utilities for UAF Digital All-Sky Camera: reading and plotting',
       long_description=open('README.rst').read(),
-      version = '1.2.1',
+      version = '1.3.0',
       classifiers=[
       'Development Status :: 4 - Beta',
       'Environment :: Console',

@@ -12,10 +12,13 @@ import numpy as np
 from datetime import datetime
 from dateutil.parser import parse
 import xarray
-from typing import Tuple
+from typing import Union
+from skimage.transform import downscale_local_mean
+
+log = logging.getLogger('DASCutils-io')
 
 
-def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
+def load(flist:Union[Path,list], azfn:Path=None, elfn:Path=None, treq:list=None,
          wavelenreq:list=None, verbose:bool=False) -> xarray.Dataset:
     """
     reads FITS images and spatial az/el calibration for allsky camera
@@ -39,16 +42,8 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
         time = []; wavelen=[]; flist1 = []
         for i,fn in enumerate(flist):
             try:
-                with fits.open(fn, mode='readonly') as h:
-                    try:
-                        time.append(parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART']))
-                    except KeyError:
-                        time.append(parse(h[0].header['FRAME']))
-
-                    try:
-                        wavelen.append(int(h[0].header['FILTWAV']))
-                    except KeyError:
-                        pass
+                time.append(gettime(fn))
+                wavelen.append(getwavelength(fn))
 
                 flist1.append(fn)
             except OSError: #many corrupted files, accounted for by preallocated vectors
@@ -101,34 +96,19 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
     time = []; img= [];  wavelen = []; lla=None
     for i,fn in enumerate(flist):
         try:
+            if i==0:
+                lla = getcoords(fn)
+
             with fits.open(fn, mode='readonly', memmap=False) as h:
                 if verbose and i==0:
                     print(h[0].header)
 
                 assert h[0].header['BITPIX']==16,'this function assumes unsigned 16-bit data'
-                try:
-                     time.append(parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART']))
-#                    expstart = parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART'])
-#                    time.append((expstart, expstart + timedelta(seconds=h[0].header['EXPTIME']))) #EXPTIME is in seconds
-                except KeyError: #old DASC files < 2011
-                    time.append(parse(h[0].header['FRAME']))
 
-                try:
-                    wavelen.append(int(h[0].header['FILTWAV']))
-                except KeyError:
-                    pass
-
-                try:
-                    lla={'lat':h[0].header['GLAT'],
-                         'lon':h[0].header['GLON']}
-                except KeyError:
-                    pass
                 """
                 DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
                 just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
                 since 14-bit \in {0,16384}.
-                These files do not have a BZERO value. Someday when they're written correctly this
-                code may need updating.
                 Further, there was a RAID failure that filled the data files with random values.
                 Don Hampton says about 90% of data OK, but 10% NOK.
                 """
@@ -136,24 +116,26 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
                 assert I.ndim == 2,'one image at a time please'
 
                 I = np.rot90(I, k=1) # NOTE: rotate by -1 to match online AVIs from UAF website.
-         #       if not 'BZERO' in h[0].header:
-         #           I[I>16384] = 0 #extreme, corrupted data
-         #           I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
+                I[I>16384] = 0 #extreme, corrupted data
+                I = I.clip(0,16384).astype(np.uint16) #discard bad values for 14-bit cameras.
 
             img.append(I)
 
+            # read headers at the end, as failures virtually always happens when reading the image (truncated files?) vs. header
+            time.append(gettime(fn))
+            wavelen.append(getwavelength(fn))
+
         except (OSError,TypeError) as e:
-            logging.warning(f'{fn} has error {e}')
+            log.warning(f'{fn} has error {e}')
 
 # %% collect output
     img = np.array(img)
     time = np.array(time) # this prevents xarray from using nanaseconds M8 datetime64 that is annoying.
-    if len(wavelen) == 0:
+    if len(wavelen) == 0 or wavelen[0] is None:
         wavelen = None
 
-
     if wavelen is None:
-        data = xarray.Dataset({'white': (('time','y','x'), img)},
+        data = xarray.Dataset({'unknown': (('time','y','x'), img)},
                                coords={'time':time})
     else:
         data = None
@@ -173,6 +155,15 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
 
     if azfn is not None and elfn is not None:
         azel = loadcal(azfn, elfn)
+        if azel['az'].shape != I.shape:
+            downscale = (1, I.shape[0] // azel['az'].shape[0], I.shape[1] // azel['az'].shape[1])
+            log.warning(f'downsizing image data by factors of {downscale[1:]} to match calibration data')
+            if wavelen is None:
+                data['unknown'] = (('time','y','x'), downscale_local_mean(data['unknown'], downscale))
+            else:
+                for w in np.unique(wavelen):
+                    data[w] = downscale_local_mean(data[w], downscale)
+
         data['az'] = azel['az']
         data['el'] = azel['el']
 
@@ -209,3 +200,40 @@ def loadcal(azfn:Path, elfn:Path) -> xarray.Dataset:
                            'az':(('y','x'),az)})
 
     return azel
+
+
+def gettime(fn:Path) -> datetime:
+    """ returns time of DASC frame in file (assumes one frame per file)"""
+    with fits.open(fn, mode='readonly') as h:
+        try:
+            t = parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART'])
+            #   expstart = parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART'])
+#               time.append((expstart, expstart + timedelta(seconds=h[0].header['EXPTIME']))) #EXPTIME is in seconds
+        except KeyError:
+            t = parse(h[0].header['FRAME'])
+
+    return t
+
+
+def getwavelength(fn:Path) -> int:
+    """ returns optical wavelength [nm] of DASC frame in file (assumes one frame per file)"""
+
+    with fits.open(fn, mode='readonly') as h:
+        try:
+            w = int(h[0].header['FILTWAV'])
+        except KeyError:
+            w = None
+
+    return w
+
+
+def getcoords(fn:Path) -> dict:
+    """ get lat, lon from DASC header"""
+    with fits.open(fn, mode='readonly') as h:
+        try:
+            latlon = {'lat':h[0].header['GLAT'],
+                      'lon':h[0].header['GLON']}
+        except KeyError:
+            latlon = None
+
+    return latlon

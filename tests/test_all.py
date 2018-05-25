@@ -27,6 +27,11 @@ def test_timestamp():
                                    (1325579522.0, 1325579532.0))
 
 def test_lost():
+# %% most basic
+    data = dio.load(fn)
+    assert data[428].shape == (1,512,512)
+    assert 'az' not in data.data_vars
+# %% a little more complex
     data = dio.load(fn,azfn,elfn)
     assert isinstance(data, xarray.Dataset)
     assert 428 in data.data_vars
@@ -35,10 +40,6 @@ def test_lost():
     assert data.lat == 65.126
     assert data.lon == -147.479
     assert data.time.values == datetime(2015, 10, 7, 8, 23, 5, 930000)
-# %% no time request
-    data = dio.load(fn)
-    assert data[428].shape == (1,512,512)
-    assert 'az' not in data.data_vars
 # %% single time request
     data = dio.load(fn,azfn,elfn,'2012-01-03T08:32:02')
     assert data[428].shape == (1,512,512)

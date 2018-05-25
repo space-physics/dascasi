@@ -23,7 +23,7 @@ def histogram_dasc(imgs, odir=None):
     fg = figure(figsize=(15,5))
     axs = fg.subplots(1,3)
     for a,i in zip(axs,imgs.data_vars):
-        if isinstance(i,str): # FIXME to reject coordinates (remove by xarray 0.11)
+        if i in ('az','el'):
             continue
         else:
             anyplot=True
@@ -60,7 +60,7 @@ def moviedasc(imgs:xarray.Dataset, odir:Path, cadence:float, rows=None, cols=Non
     else:
         time = imgs.time.values.astype(datetime)
 # %% setup figures
-    if 'white' not in imgs.data_vars:
+    if 'unknown' not in imgs.data_vars:
         for ax,w,mm,c in zip(axs,
                            np.unique(imgs.wavelength),
                            ((350,800),(350,9000),(350,900)),
@@ -85,7 +85,7 @@ def moviedasc(imgs:xarray.Dataset, odir:Path, cadence:float, rows=None, cols=Non
         ax = axs[0]
         ax.set_xticks([])
         ax.set_yticks([])
-        hi = ax.imshow(imgs.white[0],
+        hi = ax.imshow(imgs['unknown'][0],
                        vmin=(350,10000),
                        origin='lower',
                        norm=LogNorm(),cmap='gray')
@@ -98,7 +98,7 @@ def moviedasc(imgs:xarray.Dataset, odir:Path, cadence:float, rows=None, cols=Non
     t = time[0]
     dt = timedelta(seconds=cadence)
     while t <= time[-1]:
-        if 'white' not in imgs.data_vars:
+        if 'unknown' not in imgs.data_vars:
             for w,Hi,Ht in zip(np.unique(imgs.wavelength),hi,ht):
                 I = imgs[w].dropna(dim='time',how='all').sel(time=t, method='nearest')
                 Hi.set_data(I)
@@ -107,7 +107,7 @@ def moviedasc(imgs:xarray.Dataset, odir:Path, cadence:float, rows=None, cols=Non
                 except OSError: #file had corrupted time
                     Ht.set_text('')
         else:
-            I = imgs.white.sel(time=t,method='nearest')
+            I = imgs['unknown'].sel(time=t,method='nearest')
             hi.set_data(I)
             try:
                 ht.set_text(str(I.time.values))
