@@ -182,7 +182,7 @@ def load(flist:list, azfn:Path=None, elfn:Path=None, treq:list=None,
     return data
 
 
-def loadcal(azfn:Path, elfn:Path) -> Tuple[np.ndarray,np.ndarray]:
+def loadcal(azfn:Path, elfn:Path) -> Tuple[xarray.DataArray, xarray.DataArray]:
     """Load DASC plate scale (degrees/pixel)"""
 
     azfn = Path(azfn).expanduser()
