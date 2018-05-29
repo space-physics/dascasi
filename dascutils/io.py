@@ -24,6 +24,7 @@ def load(flist:Union[Path,list], azfn:Path=None, elfn:Path=None, treq:list=None,
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
     """
+    forig = flist
     warnings.filterwarnings('ignore', category=VerifyWarning)
 
     if isinstance(flist,(str,Path)):
@@ -90,6 +91,9 @@ def load(flist:Union[Path,list], azfn:Path=None, elfn:Path=None, treq:list=None,
         if len(flist)==0:
             raise FileNotFoundError(f'no files found with wavelength(s) {wavelenreq}')
 #%% iterate over image files
+    if len(flist)==0:
+        raise FileNotFoundError(f'no DASC FITS files found in {forig}')
+
     if verbose:
         print('Number of files',len(flist),'with wavelengths',np.unique(wavelen))
 
@@ -137,17 +141,25 @@ def load(flist:Union[Path,list], azfn:Path=None, elfn:Path=None, treq:list=None,
     if wavelen is None:
         data = xarray.Dataset({'unknown': (('time','y','x'), img)},
                                coords={'time':time})
+        if data.time.size > 1: # more than 1 image
+            data.attrs['cadence'] = time[1]-time[0]  # NOTE: assumes uniform kinetic rate
     else:
         data = None
+        cadence = {}
         for w in np.unique(wavelen):
             d = xarray.Dataset({w:(('time','y','x'),img[wavelen==w,...])},
                                coords={'time':time[wavelen==w]})
+            if d.time.size > 1: # more than 1 image
+                cadence[w] = d.time[1] - d.time[0]  # NOTE: assumes uniform kinetic rate
+            else:
+                cadence[w] = None
+
             if data is None:
                 data = d
             else:
                 data = xarray.merge((data,d), join='outer')
 
-
+        data.attrs['cadence'] = cadence
 
     if lla is not None:
         data.attrs['lat']=lla['lat']
