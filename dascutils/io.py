@@ -160,11 +160,21 @@ def load(flist:Union[Path,list], azfn:Path=None, elfn:Path=None, treq:list=None,
                 data = xarray.merge((data,d), join='outer')
 
         data.attrs['cadence'] = cadence
+# %% coordinates of camera
+    """
+    Camera altitude is not specified in the DASC files.
+    This can be mitigated in the end user program with a WGS-84 height above
+    ellipsoid lookup.
+    """
+    data.attrs['alt_m'] = None
 
     if lla is not None:
-        data.attrs['lat']=lla['lat']
-        data.attrs['lon']=lla['lon']
-
+        data.attrs['lat'] = lla['lat']
+        data.attrs['lon'] = lla['lon']
+    else:
+        data.attrs['lat'] = None
+        data.attrs['lon'] = None
+# %% az / el
     if azfn is not None and elfn is not None:
         azel = loadcal(azfn, elfn)
         if azel['az'].shape != I.shape:
