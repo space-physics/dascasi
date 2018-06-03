@@ -27,7 +27,7 @@ def test_timestamp():
 
 def test_basic_load():
 # %% expected fail
-    with pytest.raises(FileNotFoundError) as e:
+    with pytest.raises(FileNotFoundError):
         with tempfile.TemporaryDirectory() as d:
             data = dio.load(d)
 # %% most basic
