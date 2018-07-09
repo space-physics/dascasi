@@ -71,7 +71,7 @@ def test_download():
 
     try:
         du.download(('2015-10-07T08:23:54', '2015-10-07T08:23:56'),
-                'ftp://optics.gi.alaska.edu', 'PKR', R)
+                    'ftp://optics.gi.alaska.edu', 'PKR', R)
     except Exception:
         pytest.skip("Bad internet connection?")
 
