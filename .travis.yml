@@ -1,6 +1,4 @@
 language: python
-sudo: required
-dist: xenial
 group: travis_latest
 
 git:
@@ -8,22 +6,22 @@ git:
   quiet: true
 
 python:
-  - 3.6
-#  - 3.7  # FIXME  netcdf
+- 3.6
+#  - 3.7  # FIXME  netcdf py37 wheel
 
 os:
-  - linux
+- linux
 
 install: pip install -e .[tests]
 
 script:
-  - pytest -sv
-  - flake8
-#  - mypy . --ignore-missing-imports
+- pytest -rsv
+- flake8
+- mypy . --ignore-missing-imports
 
 after_success:
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.6* ]]; then
-    pytest --cov;
-    coveralls;
-    fi
+- if [[ $TRAVIS_PYTHON_VERSION == 3.6* ]]; then
+  pytest --cov;
+  coveralls;
+  fi
 

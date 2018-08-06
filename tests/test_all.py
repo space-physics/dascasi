@@ -4,8 +4,8 @@ import numpy as np
 import xarray
 import tempfile
 import pytest
+from pytest import approx
 from datetime import datetime
-from numpy.testing import assert_allclose
 #
 import dascutils as du
 import dascutils.io as dio
@@ -20,10 +20,9 @@ assert elfn.is_file(), f'could not find elevation cal file {azfn}'
 
 
 def test_timestamp():
-    assert_allclose(du.totimestamp('2012-01-03T08:32:02Z'), 1325579522.0)
-    assert_allclose(du.totimestamp(1325579522), 1325579522.0)
-    assert_allclose(du.totimestamp(['2012-01-03T08:32:02Z', '2012-01-03T08:32:12Z']),
-                    (1325579522.0, 1325579532.0))
+    assert du.totimestamp('2012-01-03T08:32:02Z') == approx(1325579522.0)
+    assert du.totimestamp(1325579522) == approx(1325579522.0)
+    assert du.totimestamp(['2012-01-03T08:32:02Z', '2012-01-03T08:32:12Z']) == approx((1325579522.0, 1325579532.0))
 
 
 def test_basic_load():
@@ -77,4 +76,4 @@ def test_download():
 
 
 if __name__ == '__main__':
-    np.testing.run_module_suite()
+    pytest.main(['-x', __file__])

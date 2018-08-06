@@ -54,14 +54,14 @@ def moviedasc(imgs: xarray.Dataset, odir: Path, cadence: float, rows=None, cols=
     else:
         axs = [fg.gca()]
 
-    hi = []
-    ht = []
     if imgs.time.dtype == 'M8[ns]':
         time = [datetime.utcfromtimestamp(t/1e9) for t in imgs.time.values.astype(int)]
     else:
         time = imgs.time.values.astype(datetime)
 # %% setup figures
     if 'unknown' not in imgs.data_vars:
+        Hi = []
+        Ht = []
         for ax, w, mm, c in zip(axs,
                                 np.unique(imgs.wavelength),
                                 ((350, 800), (350, 9000), (350, 900)),
@@ -71,12 +71,12 @@ def moviedasc(imgs: xarray.Dataset, odir: Path, cadence: float, rows=None, cols=
             ax.set_yticks([])
             ax.set_xlabel(f'{w} nm', color=c)
 
-            hi.append(ax.imshow(imgs[w].dropna(dim='time', how='all')[0],
+            Hi.append(ax.imshow(imgs[w].dropna(dim='time', how='all')[0],
                                 vmin=mm[0], vmax=mm[1],
                                 origin='lower',
                                 norm=LogNorm(), cmap='gray'))
 
-            ht.append(ax.set_title('', color=c))
+            Ht.append(ax.set_title('', color=c))
             # fg.colorbar(hi[-1],ax=a).set_label('14-bit data numbers')
             if themisplot is not None:
                 themisplot.overlayrowcol(ax, rows, cols)
@@ -100,13 +100,13 @@ def moviedasc(imgs: xarray.Dataset, odir: Path, cadence: float, rows=None, cols=
     dt = timedelta(seconds=cadence)
     while t <= time[-1]:
         if 'unknown' not in imgs.data_vars:
-            for w, Hi, Ht in zip(np.unique(imgs.wavelength), hi, ht):
+            for w, hi, ht in zip(np.unique(imgs.wavelength), Hi, Ht):
                 im = imgs[w].dropna(dim='time', how='all').sel(time=t, method='nearest')
-                Hi.set_data(im)
+                hi.set_data(im)
                 try:
-                    Ht.set_text(str(im.time.values))
+                    ht.set_text(str(im.time.values))
                 except OSError:  # file had corrupted time
-                    Ht.set_text('')
+                    ht.set_text('')
         else:
             im = imgs['unknown'].sel(time=t, method='nearest')
             hi.set_data(im)

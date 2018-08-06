@@ -12,13 +12,17 @@ import numpy as np
 from datetime import datetime
 from dateutil.parser import parse
 import xarray
-from typing import Union
-from skimage.transform import downscale_local_mean
+from typing import Union, List, Dict, Optional
+try:
+    from skimage.transform import downscale_local_mean
+except ImportError:
+    downscale_local_mean = None
 
 log = logging.getLogger('DASCutils-io')
 
 
-def load(flist: Union[Path, list], azfn: Path=None, elfn: Path=None, treq: list=None,
+def load(flist: List[Path], azfn: Path=None, elfn: Path=None,
+         treq: np.ndarray=None,
          wavelenreq: list=None, verbose: bool=False) -> xarray.Dataset:
     """
     reads FITS images and spatial az/el calibration for allsky camera
@@ -41,7 +45,7 @@ def load(flist: Union[Path, list], azfn: Path=None, elfn: Path=None, treq: list=
 # %% prefiltering files by user request for time or wavelength
     if treq is not None or wavelenreq is not None:
         time = []
-        wavelen = []
+        wavelen: np.ndarray = []
         flist1 = []
         for i, fn in enumerate(flist):
             try:
@@ -100,7 +104,7 @@ def load(flist: Union[Path, list], azfn: Path=None, elfn: Path=None, treq: list=
         print('Number of files', len(flist), 'with wavelengths', np.unique(wavelen))
 
     time = []
-    img = []
+    img: np.ndarray = []
     wavelen = []
     lla = None
     for i, fn in enumerate(flist):
@@ -184,12 +188,22 @@ def load(flist: Union[Path, list], azfn: Path=None, elfn: Path=None, treq: list=
         azel = loadcal(azfn, elfn)
         if azel['az'].shape != im.shape:
             downscale = (1, im.shape[0] // azel['az'].shape[0], im.shape[1] // azel['az'].shape[1])
-            log.warning(f'downsizing image data by factors of {downscale[1:]} to match calibration data')
+
+            if downscale_local_mean is None:
+                raise ImportError('pip install scikit-image')
+
+            if downscale != 1:
+                log.warning(f'downsizing images by factors of {downscale[1:]} to match calibration data')
+
             if wavelen is None:
-                data['unknown'] = (('time', 'y', 'x'), downscale_local_mean(data['unknown'], downscale))
+                if downscale != 1:
+                    data['unknown'] = (('time', 'y', 'x'), downscale_local_mean(data['unknown'], downscale))
+                else:
+                    data['unknown'] = (('time', 'y', 'x'), data['unknown'])
             else:
-                for w in np.unique(wavelen):
-                    data[w] = downscale_local_mean(data[w], downscale)
+                if downscale != 1:
+                    for w in np.unique(wavelen):
+                        data[w] = downscale_local_mean(data[w], downscale)
 
         data['az'] = azel['az']
         data['el'] = azel['el']
@@ -242,10 +256,12 @@ def gettime(fn: Path) -> datetime:
     return t
 
 
-def getwavelength(fn: Path) -> int:
+def getwavelength(fn: Path) -> Optional[int]:
     """ returns optical wavelength [nm] of DASC frame in file (assumes one frame per file)"""
 
-    with fits.open(fn, mode='readonly') as h:
+    w: Union[None, int]
+
+    with fits.open(fn) as h:
         try:
             w = int(h[0].header['FILTWAV'])
         except KeyError:
@@ -254,9 +270,12 @@ def getwavelength(fn: Path) -> int:
     return w
 
 
-def getcoords(fn: Path) -> dict:
+def getcoords(fn: Path) -> Optional[Dict[str, float]]:
     """ get lat, lon from DASC header"""
-    with fits.open(fn, mode='readonly') as h:
+
+    latlon: Union[None, Dict[str, float]]
+
+    with fits.open(fn) as h:
         try:
             latlon = {'lat': h[0].header['GLAT'],
                       'lon': h[0].header['GLON']}
