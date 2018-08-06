@@ -37,7 +37,9 @@ also several metadata parameters are included like the location of the camera.
 
 Example download October 7, 2015 from 8:23 to 8:54 UTC:
 
+```sh
 DownloadDASC 2015-10-07T08:23 2015-10-07T08:54
+```
 
 * `-o` download directory 
 * `-c` clobber existing files 
