@@ -66,14 +66,6 @@ def test_full_load():
     assert data[428].shape == (1, 512, 512)
 
 
-def test_download():
-
-    try:
-        du.download(('2015-10-07T08:23:54', '2015-10-07T08:23:56'),
-                    'ftp://optics.gi.alaska.edu', 'PKR', R)
-    except Exception:
-        pytest.skip("Bad internet connection?")
-
 
 if __name__ == '__main__':
     pytest.main(['-x', __file__])

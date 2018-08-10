@@ -3,6 +3,7 @@
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
+import sys
 from pathlib import Path
 import warnings  # corrupt FITS files let off a flood of AstroPy warnings
 from astropy.io.fits.verify import VerifyWarning
@@ -21,25 +22,27 @@ except ImportError:
 log = logging.getLogger('DASCutils-io')
 
 
-def load(flist: List[Path], azfn: Path=None, elfn: Path=None,
+def load(fin: List[Path], azfn: Path=None, elfn: Path=None,
          treq: np.ndarray=None,
          wavelenreq: list=None, verbose: bool=False) -> xarray.Dataset:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
     """
-    forig = flist
+    forig = fin
     warnings.filterwarnings('ignore', category=VerifyWarning)
 
-    if isinstance(flist, (str, Path)):
-        flist = Path(flist).expanduser()
+    if isinstance(fin, (str, Path)):
+        fin = Path(fin).expanduser()
 
-    if isinstance(flist, Path):
-        if flist.is_dir():
-            flist = list(flist.glob('*.FITS')) + list(flist.glob('*.fits'))
+    if isinstance(fin, Path):
+        if fin.is_dir():
+            flist = list(fin.glob('*.FITS'))
+            if sys.platform != 'win32':
+                flist += list(fin.glob('*.fits'))
             flist = sorted(flist)
-        elif flist.is_file():
-            flist = [flist]
+        elif fin.is_file():
+            flist = [fin]
         else:
             raise FileNotFoundError(f'not sure what {flist} is')
 # %% prefiltering files by user request for time or wavelength
