@@ -25,10 +25,8 @@ def main():
     p = ArgumentParser(description='for Poker Flat DASC all sky camera, read az/el mapping and images')
     p.add_argument('indir', help='directory of .fits or specific .fits file')
     p.add_argument('-t', '--tlim', help='only plot data in this range', nargs=2)
-    p.add_argument('-a', '--azfn', help='filename for DASC .fits azimuth calibration',
-                   default='cal/PKR_DASC_20110112_AZ_10deg.fits')
-    p.add_argument('-e', '--elfn', help='filename for DASC .fits elevation calibration',
-                   default='cal/PKR_DASC_20110112_EL_10deg.fits')
+    p.add_argument('-a', '--azelfn', help='stem for DASC .fits azimuth calibration',
+                   default='cal/PKR_DASC_20110112')
     p.add_argument('-w', '--wavelength', help='select wavelength(s) to plot simultaneously [428 558 630]', type=int, nargs='+')
     p.add_argument('-m', '--minmax', help='set values outside these limits to 0, due to data corruption',
                    type=int, nargs=2, default=[350, 9000])
@@ -36,7 +34,7 @@ def main():
     p.add_argument('-o', '--odir', help='output directory')
     p = p.parse_args()
 
-    imgs = dio.load(p.indir, p.azfn, p.elfn, p.tlim, p.wavelength)
+    imgs = dio.load(p.indir, p.azelfn, p.tlim, p.wavelength)
 
     plotdasc(imgs, p.odir, p.cadence)
 

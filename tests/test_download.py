@@ -4,6 +4,7 @@ from pathlib import Path
 
 R = Path(__file__).parent
 
+
 def test_download():
 
     try:
@@ -11,7 +12,7 @@ def test_download():
                     'ftp://optics.gi.alaska.edu', 'PKR', R)
     except Exception as e:
         pytest.skip(f"Bad internet connection?   {e}")
-        
+
 
 if __name__ == '__main__':
     pytest.main(['-x', __file__])

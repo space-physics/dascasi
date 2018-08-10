@@ -11,7 +11,7 @@ except ImportError:
     themisplot = None
 
 
-def histogram_dasc(imgs, odir=None):
+def histogram_dasc(imgs: xarray.Dataset, odir=None):
     """
     creates per wavelength histograms
     the entries in list img correspond to wavelength, a 1-D array

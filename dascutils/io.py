@@ -13,7 +13,7 @@ import numpy as np
 from datetime import datetime
 from dateutil.parser import parse
 import xarray
-from typing import Union, List, Dict, Optional
+from typing import Union, Sequence, Dict, Optional, Tuple
 try:
     from skimage.transform import downscale_local_mean
 except ImportError:
@@ -22,7 +22,8 @@ except ImportError:
 log = logging.getLogger('DASCutils-io')
 
 
-def load(fin: List[Path], azfn: Path=None, elfn: Path=None,
+def load(fin: Union[Path, Sequence[Path]],
+         azelfn: Union[Path, Sequence[Path]]=None,
          treq: np.ndarray=None,
          wavelenreq: list=None, verbose: bool=False) -> xarray.Dataset:
     """
@@ -187,8 +188,8 @@ def load(fin: List[Path], azfn: Path=None, elfn: Path=None,
         data.attrs['lat'] = None
         data.attrs['lon'] = None
 # %% az / el
-    if azfn is not None and elfn is not None:
-        azel = loadcal(azfn, elfn)
+    if azelfn is not None:
+        azel = loadcal(azelfn)
         if azel['az'].shape != im.shape:
             downscale = (1, im.shape[0] // azel['az'].shape[0], im.shape[1] // azel['az'].shape[1])
 
@@ -217,8 +218,14 @@ def load(fin: List[Path], azfn: Path=None, elfn: Path=None,
     return data
 
 
-def loadcal(azfn: Path, elfn: Path) -> xarray.Dataset:
+def loadcal(azelfn: Union[Path, Sequence[Path]]) -> xarray.Dataset:
     """Load DASC plate scale (degrees/pixel)"""
+    if isinstance(azelfn, (str, Path)):
+        azfn, elfn = stem2fn(azelfn)
+    elif len(azelfn) == 1:
+        azfn, elfn = stem2fn(azelfn[0])
+    else:
+        azfn, elfn = azelfn
 
     azfn = Path(azfn).expanduser()
     elfn = Path(elfn).expanduser()
@@ -286,3 +293,23 @@ def getcoords(fn: Path) -> Optional[Dict[str, float]]:
             latlon = None
 
     return latlon
+
+
+def stem2fn(stem: Path) -> Tuple[Path, Path]:
+    """if user specifies the stem to Az,El, generate the az, el filenames"""
+    assert isinstance(stem, (str, Path))
+
+    stem = Path(stem).expanduser()
+
+    if not stem.parent.is_dir():
+        raise FileNotFoundError(f'{stem.parent} is not a directory')
+    elif stem.is_file():
+        raise OSError(f'need to specify stem, not whole filename {stem}')
+
+    azfn = stem.parent / (stem.name + '_AZ_10deg.fits')
+    elfn = stem.parent / (stem.name + '_EL_10deg.fits')
+
+    if not azfn.is_file() or not elfn.is_file():
+        raise FileNotFoundError(f'did not find {azfn} \n {elfn}')
+
+    return azfn, elfn

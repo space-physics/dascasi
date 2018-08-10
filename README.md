@@ -47,9 +47,10 @@ DownloadDASC 2015-10-07T08:23 2015-10-07T08:54
 
 ### Make movies from DASC raw data files
 
-Plots all wavelengths in subplots:
+Plots all wavelengths in subplots, for example:
+
 ```sh
-PlotDASC datadir
+PlotDASC tests/ -a cal/PKR_DASC_20110112
 ```
 
 additional options include:
@@ -64,7 +65,7 @@ The `cal/` directory contains `AZ` and `EL` files corresponding to each pixel.
 ```python
 import dascutils.io as dio
 
-data = dio.load('tests/PKR_DASC_0558_20151007_082351.743.FITS', azfn='cal/PKR_DASC_20110112_AZ_10deg.fits', elfn='cal/PKR_DASC_20110112_EL_10deg.fits')
+data = dio.load('tests/PKR_DASC_0558_20151007_082351.743.FITS', azelfn='cal/PKR_DASC_20110112')
 ```
 
 now `data` includes data variables `az` and `el`, same shape as the image(s), along with camera position in `lat` `lon` `alt_m`.

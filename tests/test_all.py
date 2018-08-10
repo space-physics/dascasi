@@ -12,11 +12,7 @@ import dascutils.io as dio
 
 R = Path(__file__).parent
 
-azfn = R.parent/'cal/PKR_DASC_20110112_AZ_10deg.fits'
-elfn = R.parent/'cal/PKR_DASC_20110112_EL_10deg.fits'
-
-assert azfn.is_file(), f'could not find azimuth cal file {azfn}'
-assert elfn.is_file(), f'could not find elevation cal file {azfn}'
+azelstem = R.parent/'cal/PKR_DASC_20110112'
 
 
 def test_timestamp():
@@ -53,18 +49,17 @@ def test_basic_load():
 
 def test_full_load():
     # %% single time request
-    data = dio.load(R, azfn, elfn, '2012-01-03T08:32:02')
+    data = dio.load(R, azelstem, '2012-01-03T08:32:02')
     assert data[558].shape == (1, 512, 512)
     assert data.az.shape == (512, 512)
     assert data.el.shape == (512, 512)
     assert data.time.item() == datetime(2015, 10, 7, 8, 23, 51, 743000)
 # %% multi-time request and wavelength
-    data = dio.load(R, azfn, elfn, ('2012-01-03T08:32:02', '2016-01-04'), 558)
+    data = dio.load(R, azelstem, ('2012-01-03T08:32:02', '2016-01-04'), 558)
     assert data[558].shape == (2, 512, 512)
 # %% wavelength request
-    data = dio.load(R, azfn, elfn, None, 428)
+    data = dio.load(R, azelstem, None, 428)
     assert data[428].shape == (1, 512, 512)
-
 
 
 if __name__ == '__main__':
