@@ -55,13 +55,14 @@ PlotDASC datadir
 ### Spatial registration (plate scale)
 
 The `cal/` directory contains `AZ` and `EL` files corresponding to each pixel. 
-Be sure you know if you're using magnetic north or geographic north, or you'll see a rotation by the declination.
+
 ```python
 import dascutils.io as dio
 
-data = dio.load('tests/PKR_DASC_0558_20151007_082351.743.FITS',
-                azfn='cal/PKR_DASC_20110112_AZ_10deg.fits',
-                elfn='cal/PKR_DASC_20110112_EL_10deg.fits')
+data = dio.load('tests/PKR_DASC_0558_20151007_082351.743.FITS', azfn='cal/PKR_DASC_20110112_AZ_10deg.fits',elfn='cal/PKR_DASC_20110112_EL_10deg.fits')
 ```
 
-Note the date in the filename--perhaps the camera was moved since before or long after that date?
+now `data` includes data variables `az` and `el`, same shape as the image(s), along with camera position in `lat` `lon` `alt_m`.
+
+* Be sure you know if you're using magnetic north or geographic north, or you'll see a rotation by the declination.
+* Note the date in the filename--perhaps the camera was moved since before or long after that date?
