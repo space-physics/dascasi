@@ -38,7 +38,8 @@ def download(startend, host, site, odir='', clobber=False):
     start = parse(startend[0]) if isinstance(startend[0], str) else startend[0]
     end = parse(startend[1]) if isinstance(startend[1], str) else startend[1]
 
-    assert end >= start, 'start time must be before end time!'
+    if end < start:
+        raise ValueError('start time must be before end time!')
 
     parsed = urlparse(host)
     ftop = parsed[1]
