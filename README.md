@@ -42,7 +42,7 @@ DownloadDASC 2015-10-07T08:23 2015-10-07T08:54
 ```
 
 * `-o` download directory 
-* `-c` clobber existing files 
+* `-c` overwrite existing files 
 * `-s` three-letter site acronym e.g. `PKR` for poker flat etc.
 
 ### Make movies from DASC raw data files
@@ -52,6 +52,11 @@ Plots all wavelengths in subplots:
 PlotDASC datadir
 ```
 
+additional options include:
+
+* `-t` specifiy time limits e.g.  `-t 2014-01-02T02:30 2014-01-02T02:35`
+* `-w` choose only certain wavelength(s)
+
 ### Spatial registration (plate scale)
 
 The `cal/` directory contains `AZ` and `EL` files corresponding to each pixel. 
@@ -59,7 +64,7 @@ The `cal/` directory contains `AZ` and `EL` files corresponding to each pixel.
 ```python
 import dascutils.io as dio
 
-data = dio.load('tests/PKR_DASC_0558_20151007_082351.743.FITS', azfn='cal/PKR_DASC_20110112_AZ_10deg.fits',elfn='cal/PKR_DASC_20110112_EL_10deg.fits')
+data = dio.load('tests/PKR_DASC_0558_20151007_082351.743.FITS', azfn='cal/PKR_DASC_20110112_AZ_10deg.fits', elfn='cal/PKR_DASC_20110112_EL_10deg.fits')
 ```
 
 now `data` includes data variables `az` and `el`, same shape as the image(s), along with camera position in `lat` `lon` `alt_m`.
