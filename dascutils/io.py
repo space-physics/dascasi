@@ -88,8 +88,9 @@ def load(fin: Union[Path, Sequence[Path]],
         if isinstance(i, np.ndarray) and not i.any():
             raise ValueError(f'no valid data found in {treq}')
 
-        flist = flist[i]
-        wavelen = wavelen[i]
+        flist = np.atleast_1d(flist[i])
+        wavelen = np.atleast_1d(wavelen[i])
+        
         if len(flist) == 0:
             raise FileNotFoundError(f'no files found within time limits {treq}')
 # %% wavelength slice
@@ -129,6 +130,9 @@ def load(fin: Union[Path, Sequence[Path]],
                 Don Hampton says about 90% of data OK, but 10% NOK.
                 """
 
+                im = h[0].data.squeeze()  # Squeeze for old < 2011 files with 3-D, 1 image data.
+                assert im.ndim == 2, 'one image at a time please'
+
                 im = np.rot90(im, k=1)  # NOTE: rotate by -1 to match online AVIs from UAF website.
                 im[im > 16384] = 0  # extreme, corrupted data
                 im = im.clip(0, 16384).astype(np.uint16)  # discard bad values for 14-bit cameras.
@@ -144,6 +148,7 @@ def load(fin: Union[Path, Sequence[Path]],
 
 # %% collect output
     img = np.array(img)
+
     time = np.array(time)  # this prevents xarray from using nanaseconds M8 datetime64 that is annoying.
     if len(wavelen) == 0 or wavelen[0] is None:
         wavelen = None
