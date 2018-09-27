@@ -1,4 +1,5 @@
 .pytest_cache/
+.mypy_cache/
 
 *.FITS
 *.avi
