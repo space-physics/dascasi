@@ -116,6 +116,8 @@ def load(fin: Union[Path, Sequence[Path]],
     img: np.ndarray = []
     wavelen = []
     lla = None
+    # Get a rotation angle, different for different cameras
+    k = -1 if (int(fn.name[14:18]) < 2012) else 1
     for i, fn in enumerate(flist):
         try:
             if i == 0:
@@ -137,8 +139,8 @@ def load(fin: Union[Path, Sequence[Path]],
 
                 im = h[0].data.squeeze()  # Squeeze for old < 2011 files with 3-D, 1 image data.
                 assert im.ndim == 2, 'one image at a time please'
-
-                im = np.rot90(im, k=1)  # NOTE: rotate by -1 to match online AVIs from UAF website.
+                
+                im = np.rot90(im, k=k)  # NOTE: rotate by -1 to match online AVIs from UAF website.
                 im[im > 16384] = 0  # extreme, corrupted data
                 im = im.clip(0, 16384).astype(np.uint16)  # discard bad values for 14-bit cameras.
 
@@ -159,10 +161,10 @@ def load(fin: Union[Path, Sequence[Path]],
         wavelen = None
 
     if wavelen is None:
-        data = xarray.Dataset({'unknown': (('time', 'y', 'x'), img)},
+        data = xarray.Dataset({'000': (('time', 'y', 'x'), img)},
                               coords={'time': time})
         if data.time.size > 1:  # more than 1 image
-            data.attrs['cadence'] = time[1]-time[0]  # NOTE: assumes uniform kinetic rate
+            data.attrs['cadence'] = round( ((time[1]-time[0]).total_seconds()),2)  # NOTE: assumes uniform kinetic rate
     else:
         data = None
         cadence = {}
@@ -208,9 +210,9 @@ def load(fin: Union[Path, Sequence[Path]],
 
             if wavelen is None:
                 if downscale != 1:
-                    data['unknown'] = (('time', 'y', 'x'), downscale_local_mean(data['unknown'], downscale))
+                    data['000'] = (('time', 'y', 'x'), downscale_local_mean(data['000'], downscale))
                 else:
-                    data['unknown'] = (('time', 'y', 'x'), data['unknown'])
+                    data['000'] = (('time', 'y', 'x'), data['000'])
             else:
                 if downscale != 1:
                     for w in np.unique(wavelen):
@@ -236,7 +238,7 @@ def load(fin: Union[Path, Sequence[Path]],
         data.coords['lon'] = (('y','x'),lon)
         data.attrs['alt_m'] = mapping_altitude
     data.attrs['filename'] = ' '.join((p.name for p in flist))
-    data.attrs['wavelength'] = wavelen
+    data.attrs['wavelength'] = wavelen if isinstance(wavelen, (int,float)) else '000'
 
 # %% Save to netCDF?
     if ofn is None:
@@ -328,7 +330,11 @@ def getcoords(fn: Path) -> Optional[Dict[str, float]]:
             latlon = {'lat': h[0].header['GLAT'],
                       'lon': h[0].header['GLON']}
         except KeyError:
-            latlon = None
+            if 'PKR' in fn.name:
+                latlon = {'lat': 65.126,
+                          'lon': -147.479}
+            else:
+                latlon = None
 
     return latlon
 
