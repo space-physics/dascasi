@@ -10,10 +10,11 @@ def main():
     p.add_argument('-c', '--overwrite', help='overwrite existing files', action='store_true')
     p.add_argument('-host', default='ftp://optics.gi.alaska.edu')
     p.add_argument('-s', '--site', help='EAA FYU KAK PKR TOO VEE', default='PKR')
+    p.add_argument('-w', '--wl', help='Choose the wavelength', default=None)
     p = p.parse_args()
 
     # host = "ftp://mirrors.arsc.edu/AMISR/PKR/DASC/RAW/"
-    du.download(p.startend, p.host, p.site, p.odir, p.clobber)
+    du.download(p.startend, p.host, p.site, p.odir,p.wl)
 
 
 if __name__ == '__main__':
