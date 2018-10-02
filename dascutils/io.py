@@ -18,14 +18,18 @@ try:
     from skimage.transform import downscale_local_mean
 except ImportError:
     downscale_local_mean = None
+    
+from .processing import interpolateCoordinate, circular2lla, datetime2posix
 
 log = logging.getLogger('DASCutils-io')
-
 
 def load(fin: Union[Path, Sequence[Path]],
          azelfn: Union[Path, Sequence[Path]]=None,
          treq: np.ndarray=None,
-         wavelenreq: list=None, verbose: bool=False) -> xarray.Dataset:
+         wavelenreq: list=None, verbose: bool=False,
+         coordinate: str='polar',
+         mapping_altitude: Union[int,float]=None,
+         ofn: Union[Path,str]=None) -> xarray.Dataset:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
@@ -91,12 +95,13 @@ def load(fin: Union[Path, Sequence[Path]],
 
         flist = np.atleast_1d(flist[i])
         wavelen = np.atleast_1d(wavelen[i])
+        
         if len(flist) == 0:
             raise FileNotFoundError(f'no files found within time limits {treq}')
 # %% wavelength slice
     if wavelenreq is not None and wavelen is not None:
         i = np.isin(wavelen, wavelenreq)
-        flist = np.atleast_1d(flist[i])
+        flist = flist[i]
 
         if len(flist) == 0:
             raise FileNotFoundError(f'no files found with wavelength(s) {wavelenreq}')
@@ -111,6 +116,8 @@ def load(fin: Union[Path, Sequence[Path]],
     img: np.ndarray = []
     wavelen = []
     lla = None
+    # Get a rotation angle, different for different cameras
+    k = -1 if (int(fn.name[14:18]) < 2012) else 1
     for i, fn in enumerate(flist):
         try:
             if i == 0:
@@ -129,10 +136,11 @@ def load(fin: Union[Path, Sequence[Path]],
                 Further, there was a RAID failure that filled the data files with random values.
                 Don Hampton says about 90% of data OK, but 10% NOK.
                 """
+
                 im = h[0].data.squeeze()  # Squeeze for old < 2011 files with 3-D, 1 image data.
                 assert im.ndim == 2, 'one image at a time please'
-
-                im = np.rot90(im, k=1)  # NOTE: rotate by -1 to match online AVIs from UAF website.
+                
+                im = np.rot90(im, k=k)  # NOTE: rotate by -1 to match online AVIs from UAF website.
                 im[im > 16384] = 0  # extreme, corrupted data
                 im = im.clip(0, 16384).astype(np.uint16)  # discard bad values for 14-bit cameras.
 
@@ -147,25 +155,26 @@ def load(fin: Union[Path, Sequence[Path]],
 
 # %% collect output
     img = np.array(img)
+
     time = np.array(time)  # this prevents xarray from using nanaseconds M8 datetime64 that is annoying.
     if len(wavelen) == 0 or wavelen[0] is None:
         wavelen = None
 
     if wavelen is None:
-        data = xarray.Dataset({'unknown': (('time', 'y', 'x'), img)},
+        data = xarray.Dataset({'000': (('time', 'y', 'x'), img)},
                               coords={'time': time})
         if data.time.size > 1:  # more than 1 image
-            data.attrs['cadence'] = time[1]-time[0]  # NOTE: assumes uniform kinetic rate
+            data.attrs['cadence'] = round( ((time[1]-time[0]).total_seconds()),2)  # NOTE: assumes uniform kinetic rate
     else:
         data = None
         cadence = {}
         for w in np.unique(wavelen):
-            d = xarray.Dataset({w: (('time', 'y', 'x'), img[wavelen == w, ...])},
+            d = xarray.Dataset({str(w): (('time', 'y', 'x'), img[wavelen == w, ...])},
                                coords={'time': time[wavelen == w]})
             if d.time.size > 1:  # more than 1 image
-                cadence[w] = d.time[1] - d.time[0]  # NOTE: assumes uniform kinetic rate
+                cadence[w] = round(((d.time[1] - d.time[0]).item()*1e-9),2)  # NOTE: assumes uniform kinetic rate
             else:
-                cadence[w] = None
+                cadence[w] = 0 #
 
             if data is None:
                 data = d
@@ -179,14 +188,14 @@ def load(fin: Union[Path, Sequence[Path]],
     This can be mitigated in the end user program with a WGS-84 height above
     ellipsoid lookup.
     """
-    data.attrs['alt_m'] = None
-
+    data.attrs['alt0'] = 0
+    
     if lla is not None:
-        data.attrs['lat'] = lla['lat']
-        data.attrs['lon'] = lla['lon']
+        data.attrs['lat0'] = lla['lat']
+        data.attrs['lon0'] = lla['lon']
     else:
-        data.attrs['lat'] = None
-        data.attrs['lon'] = None
+        data.attrs['lat0'] = None
+        data.attrs['lon0'] = None
 # %% az / el
     if azelfn is not None:
         azel = loadcal(azelfn)
@@ -201,9 +210,9 @@ def load(fin: Union[Path, Sequence[Path]],
 
             if wavelen is None:
                 if downscale != 1:
-                    data['unknown'] = (('time', 'y', 'x'), downscale_local_mean(data['unknown'], downscale))
+                    data['000'] = (('time', 'y', 'x'), downscale_local_mean(data['000'], downscale))
                 else:
-                    data['unknown'] = (('time', 'y', 'x'), data['unknown'])
+                    data['000'] = (('time', 'y', 'x'), data['000'])
             else:
                 if downscale != 1:
                     for w in np.unique(wavelen):
@@ -211,11 +220,42 @@ def load(fin: Union[Path, Sequence[Path]],
 
         data['az'] = azel['az']
         data['el'] = azel['el']
+        
+# %% az/el -> lat/lon
+    if coordinate == 'wsg':
+        if mapping_altitude is None:
+            mapping_altitude = 100
+            print ('Attribute mapping altitude was not set! Deafult is set to 100 km.')
 
+        # Get rid of NaNs in the coordinates' arrays
+        eli = interpolateCoordinate(azel['el'].values, N = azel['el'].values.shape[0], method = 'nearest')
+        azi = interpolateCoordinate(azel['az'].values, N = azel['el'].values.shape[0], method = 'nearest')
+        # Convert Coordinates to WSG84
+        lat, lon, alt = circular2lla(az = azi, el = eli, lat0 = lla['lat'], 
+                                     lon0 = lla['lon'], alt0 = 0,
+                                     mapping_altitude = mapping_altitude)
+        data.coords['lat'] = (('x','y'), lat)
+        data.coords['lon'] = (('y','x'), lon)
+        data.attrs['alt_m'] = mapping_altitude
     data.attrs['filename'] = ' '.join((p.name for p in flist))
-    data.attrs['wavelength'] = wavelen
+    data.attrs['wavelength'] = wavelen if isinstance(wavelen, (int,float)) else '000'
 
-    return data
+# %% Save to netCDF?
+    if ofn is None:
+        return data
+    else:
+        # Convert datetime to posix. netCDf cannot save datetime
+        posix_time = datetime2posix(data.time.values)
+        data['time'] = posix_time
+        if wavelen is not None:
+            data.attrs['cadence'] = cadence[wavelen[0]]
+        # To HDF
+        try: 
+            save2HDF(data=data, fn_out=ofn)
+            return data
+        except Exception as e:
+            return data
+            raise (e)
 
 
 def loadcal(azelfn: Union[Path, Sequence[Path]]) -> xarray.Dataset:
@@ -239,6 +279,7 @@ def loadcal(azelfn: Union[Path, Sequence[Path]]) -> xarray.Dataset:
 
     with fits.open(elfn, mode='readonly') as h:
         el = h[0].data
+
     bad &= el == 0.
 
     el[bad] = np.nan
@@ -290,7 +331,11 @@ def getcoords(fn: Path) -> Optional[Dict[str, float]]:
             latlon = {'lat': h[0].header['GLAT'],
                       'lon': h[0].header['GLON']}
         except KeyError:
-            latlon = None
+            if 'PKR' in fn.name:
+                latlon = {'lat': 65.126,
+                          'lon': -147.479}
+            else:
+                latlon = None
 
     return latlon
 
@@ -313,3 +358,26 @@ def stem2fn(stem: Path) -> Tuple[Path, Path]:
         raise FileNotFoundError(f'did not find {azfn} \n {elfn}')
 
     return azfn, elfn
+
+def save2HDF(data: xarray.Dataset=None,
+            fn_out: Union[str, Path]=None):
+    ENC = {'zlib': True, 'complevel': 1, 'fletcher32': True}
+    if data is None:
+        raise ('Input data invalid')
+    if (fn_out is '') or (fn_out is None):
+        print ('Path/output file not given. Default is desktop!')
+        fn_out = Path.home() / 'Desktop' / 'dasc_out.nc'
+    
+    if isinstance(fn_out, str): fn_out = Path(fn_out).expanduser()
+    
+    if fn_out.is_dir(): fn_out = fn_out / 'dasc_out.nc'
+    
+    if (fn_out.suffix != '.nc') or (fn_out.suffix != '.h5') or (fn_out.suffix != '.hdf5'):
+        fn_out = fn_out.with_suffix('.nc')
+        
+    # Write a timestamp of conversion
+    data.attrs['converted'] = str(datetime.now())
+    
+    enc = {k:ENC for k in data.data_vars}
+    print ('Saving data into: ', fn_out)
+    data.to_netcdf(fn_out, mode='w', encoding=enc, group='DASC')

@@ -4,7 +4,7 @@ import ftplib
 from dateutil.parser import parse
 from datetime import datetime
 from urllib.parse import urlparse
-
+from .processing import interpolate, interpSpeedUpParams, circular2lla, datetime2posix, interpolateCoordinate # noqa: F401
 
 def totimestamp(t):
     """
@@ -26,8 +26,7 @@ def totimestamp(t):
 
     return t
 
-
-def download(startend, host, site, odir='', clobber=False):
+def download(startend, host, site, odir='', wl=None, clobber=False):
     """
     startend: tuple of datetime
     year,month,day: integer
@@ -63,10 +62,14 @@ def download(startend, host, site, odir='', clobber=False):
 
         print(f'remote filesize approx. {F.size(dlist[0])/1000} kB.')
         for f in dlist:
-            # %% file in time range
-            # print (int(round(float(f[27:31]))))
+            # %% file in time and WL range
             t = datetime.strptime(f[14:-9], '%Y%m%d_%H%M%S')
-            if start <= t <= end:
+            if wl is not None:
+                file_wl = f[10:13]
+                WL = True if (wl == file_wl) else False
+            else:
+                WL = True
+            if (start <= t <= end) and WL:
                 # %% download file
                 ofn = odir / f
                 if not clobber:
