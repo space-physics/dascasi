@@ -228,14 +228,14 @@ def load(fin: Union[Path, Sequence[Path]],
             print ('Attribute mapping altitude was not set! Deafult is set to 100 km.')
 
         # Get rid of NaNs in the coordinates' arrays
-        eli = interpolateCoordinate(azel['el'].values, N=azel['el'].values.shape[0], method='nearest')
-        azi = interpolateCoordinate(azel['az'].values, N=azel['el'].values.shape[0], method='nearest')
+        eli = interpolateCoordinate(azel['el'].values, N = azel['el'].values.shape[0], method = 'nearest')
+        azi = interpolateCoordinate(azel['az'].values, N = azel['el'].values.shape[0], method = 'nearest')
         # Convert Coordinates to WSG84
-        lat, lon, alt = circular2lla(az=azi, el=eli, lat0=lla['lat'], 
-                                     lon0=lla['lon'], alt0=0,
-                                     mapping_altitude=mapping_altitude)
-        data.coords['lat'] = (('x','y'),lat)
-        data.coords['lon'] = (('y','x'),lon)
+        lat, lon, alt = circular2lla(az = azi, el = eli, lat0 = lla['lat'], 
+                                     lon0 = lla['lon'], alt0 = 0,
+                                     mapping_altitude = mapping_altitude)
+        data.coords['lat'] = (('x','y'), lat)
+        data.coords['lon'] = (('y','x'), lon)
         data.attrs['alt_m'] = mapping_altitude
     data.attrs['filename'] = ' '.join((p.name for p in flist))
     data.attrs['wavelength'] = wavelen if isinstance(wavelen, (int,float)) else '000'
@@ -252,6 +252,7 @@ def load(fin: Union[Path, Sequence[Path]],
         # To HDF
         try: 
             save2HDF(data=data, fn_out=ofn)
+            return data
         except Exception as e:
             return data
             raise (e)
