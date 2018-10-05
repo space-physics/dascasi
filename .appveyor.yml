@@ -1,6 +1,6 @@
 image:
 - Visual Studio 2017
-- Ubuntu
+#- Ubuntu  # waiting py37 linux netcdf4 wheel
 
 stack: python 3
 
