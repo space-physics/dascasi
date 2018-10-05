@@ -13,6 +13,7 @@ HOST = 'ftp://optics.gi.alaska.edu'
 def download(startend: Tuple[datetime, datetime],
              site: str, odir: Path,
              host: str = None,
+             wavelen: str = None,
              overwrite: bool = False) -> List[Path]:
     """
     startend: tuple of datetime
@@ -38,6 +39,16 @@ def download(startend: Tuple[datetime, datetime],
 # %% get available files for this day
     rparent = f'{fpath}/DASC/RAW/{start.year:4d}'
     rday = f'{start.year:4d}{start.month:02d}{start.day:02d}'
+# %% wavelength
+    if wavelen is None:
+        pass
+    elif isinstance(wavelen, int):
+        wavelen = f'{wavelen:04d}'
+    elif isinstance(wavelen, str):
+        if len(wavelen) != 4:
+            raise ValueError('expecting 4-character wavelength spec e.g. 0428')
+    elif not isinstance(wavelen, (tuple, list)):
+        raise TypeError('expecting 4-character wavelength spec e.g. 0428')
 
     flist = []
 
@@ -53,24 +64,28 @@ def download(startend: Tuple[datetime, datetime],
 
         print(f'remote filesize approx. {F.size(dlist[0])/1000} kB.')  # type: ignore
 
-        for f in dlist:
-            # %% file in time range
-            t = datetime.strptime(f[14:-9], '%Y%m%d_%H%M%S')
-            if start <= t <= end:
-                # %% download file
-                ofn = odir / f
-                flist.append(ofn)
+        for rfn in dlist:
+            # %% qualifiers
+            if wavelen and rfn[9:13] not in wavelen:
+                continue
 
-                if not overwrite:
-                    if ofn.is_file():  # do filesizes match, if so, skip download
-                        rsize = F.size(f)
-                        if ofn.stat().st_size == rsize:
-                            print('SKIPPING existing', ofn)
-                            continue
+            tfile = datetime.strptime(rfn[14:-9], '%Y%m%d_%H%M%S')
+            if tfile < start or tfile > end:
+                continue
+# %% download file
+            ofn = odir / rfn
+            flist.append(ofn)
 
-                print(ofn)
-                with ofn.open('wb') as h:
-                    F.retrbinary(f'RETR {f}', h.write)
-                    sleep(1)  # anti-leech
+            if not overwrite:
+                if ofn.is_file():  # do filesizes match, if so, skip download
+                    rsize = F.size(rfn)
+                    if ofn.stat().st_size == rsize:
+                        print('SKIPPING existing', ofn)
+                        continue
+
+            print(ofn)
+            with ofn.open('wb') as h:
+                F.retrbinary(f'RETR {rfn}', h.write)
+                sleep(1)  # anti-leech
 
     return flist
