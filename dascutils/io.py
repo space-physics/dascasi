@@ -13,7 +13,7 @@ import numpy as np
 from datetime import datetime
 from dateutil.parser import parse
 import xarray
-from typing import Union, Dict, Optional, Tuple
+from typing import Union, Dict, Optional, Tuple, List
 try:
     from skimage.transform import downscale_local_mean
 except ImportError:
@@ -21,14 +21,21 @@ except ImportError:
 
 log = logging.getLogger('DASCutils-io')
 
+# for NetCDF compression. too high slows down with little space savings.
+ENC = {'zlib': True, 'complevel': 1, 'fletcher32': True}
+
 
 def load(fin: Path,
          azelfn: Path = None,
          treq: np.ndarray = None,
-         wavelenreq: list = None, verbose: bool = False) -> xarray.Dataset:
+         wavelenreq: List[str] = None,
+         ofn: Path = None,
+         verbose: bool = False) -> xarray.Dataset:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
+
+    odir: filename to write converted NetCDF4 (HDF5) video to.
     """
     forig = fin
     warnings.filterwarnings('ignore', category=VerifyWarning)
@@ -110,12 +117,8 @@ def load(fin: Path,
     time = []
     img: np.ndarray = []
     wavelen = []
-    lla = None
     for i, fn in enumerate(flist):
         try:
-            if i == 0:
-                lla = getcoords(fn)
-
             with fits.open(fn, mode='readonly', memmap=False) as h:
                 if verbose and i == 0:
                     print(h[0].header)
@@ -148,7 +151,8 @@ def load(fin: Path,
 # %% collect output
     img = np.array(img)
     time = np.array(time)  # this prevents xarray from using nanaseconds M8 datetime64 that is annoying.
-    if len(wavelen) == 0 or wavelen[0] is None:
+    wavelen = np.array(wavelen)
+    if wavelen.size == 0 or wavelen[0] is None:
         wavelen = None
 
     if wavelen is None:
@@ -156,64 +160,90 @@ def load(fin: Path,
                               coords={'time': time})
         if data.time.size > 1:  # more than 1 image
             data.attrs['cadence'] = time[1]-time[0]  # NOTE: assumes uniform kinetic rate
+        wavelen == ''
     else:
         data = None
-        cadence = {}
         for w in np.unique(wavelen):
             d = xarray.Dataset({w: (('time', 'y', 'x'), img[wavelen == w, ...])},
                                coords={'time': time[wavelen == w]})
-            if d.time.size > 1:  # more than 1 image
-                cadence[w] = d.time[1] - d.time[0]  # NOTE: assumes uniform kinetic rate
-            else:
-                cadence[w] = None
 
             if data is None:
                 data = d
             else:
                 data = xarray.merge((data, d), join='outer')
+# %% metadata
+    data.attrs['filename'] = ' '.join((p.name for p in flist))
+    data.attrs['wavelength'] = wavelen
+# %% camera location
+    data = _camloc(flist[0], data)
+# %% az / el
+    data = _azel(azelfn, data)
+# %% HDF5 write
+    if isinstance(ofn, (str, Path)):
+        ofn = Path(ofn).expanduser()
+        if ofn.is_dir():
+            ofn = ofn / f'{flist[0].name[:3]}_{data.time[0].strftime("%Y-%m-%dT%H")}.nc'
+        else:
+            ofn.parent.mkdir(exist_ok=True)
 
-        data.attrs['cadence'] = cadence
-# %% coordinates of camera
+        print('writing', ofn)
+
+        enc = {k: ENC for k in data.data_vars}
+        data.to_netcdf(ofn, 'w', encoding=enc)
+
+    return data
+
+
+def _camloc(fn: Path, data: xarray.Dataset) -> xarray.Dataset:
     """
     Camera altitude is not specified in the DASC files.
     This can be mitigated in the end user program with a WGS-84 height above
     ellipsoid lookup.
     """
-    data.attrs['alt_m'] = None
+    data.attrs['alt_m'] = np.nan
+
+    lla = getcoords(fn)
 
     if lla is not None:
         data.attrs['lat'] = lla['lat']
         data.attrs['lon'] = lla['lon']
     else:
-        data.attrs['lat'] = None
-        data.attrs['lon'] = None
-# %% az / el
-    if azelfn is not None:
-        azel = loadcal(azelfn)
-        if azel['az'].shape != im.shape:
-            downscale = (1, im.shape[0] // azel['az'].shape[0], im.shape[1] // azel['az'].shape[1])
+        data.attrs['lat'] = np.nan
+        data.attrs['lon'] = np.nan
 
-            if downscale_local_mean is None:
-                raise ImportError('pip install scikit-image')
+    return data
 
+
+def _azel(azelfn: Optional[Path], data: xarray.Dataset) -> xarray.Dataset:
+
+    if not azelfn:
+        return data
+
+    azel = loadcal(azelfn)
+
+    imgshape = data[data.wavelength[0]].shape[1:]
+
+    if azel['az'].shape != imgshape:
+        downscale = (1, imgshape[0] // azel['az'].shape[0], imgshape[1] // azel['az'].shape[1])
+
+        if downscale_local_mean is None:
+            raise ImportError('pip install scikit-image')
+
+        if downscale != 1:
+            log.warning(f'downsizing images by factors of {downscale[1:]} to match calibration data')
+
+        if data.wavelength is None:
             if downscale != 1:
-                log.warning(f'downsizing images by factors of {downscale[1:]} to match calibration data')
-
-            if wavelen is None:
-                if downscale != 1:
-                    data['unknown'] = (('time', 'y', 'x'), downscale_local_mean(data['unknown'], downscale))
-                else:
-                    data['unknown'] = (('time', 'y', 'x'), data['unknown'])
+                data['unknown'] = (('time', 'y', 'x'), downscale_local_mean(data['unknown'], downscale))
             else:
-                if downscale != 1:
-                    for w in np.unique(wavelen):
-                        data[w] = downscale_local_mean(data[w], downscale)
+                data['unknown'] = (('time', 'y', 'x'), data['unknown'])
+        else:
+            if downscale != 1:
+                for w in np.unique(data.wavelength):
+                    data[w] = downscale_local_mean(data[w], downscale)
 
-        data['az'] = azel['az']
-        data['el'] = azel['el']
-
-    data.attrs['filename'] = ' '.join((p.name for p in flist))
-    data.attrs['wavelength'] = wavelen
+    data['az'] = azel['az']
+    data['el'] = azel['el']
 
     return data
 
@@ -266,14 +296,12 @@ def gettime(fn: Path) -> datetime:
     return t
 
 
-def getwavelength(fn: Path) -> Optional[int]:
+def getwavelength(fn: Path) -> str:
     """ returns optical wavelength [nm] of DASC frame in file (assumes one frame per file)"""
-
-    w: Union[None, int]
 
     with fits.open(fn) as h:
         try:
-            w = int(h[0].header['FILTWAV'])
+            w = h[0].header['FILTWAV']
         except KeyError:
             w = None
 
@@ -290,7 +318,11 @@ def getcoords(fn: Path) -> Optional[Dict[str, float]]:
             latlon = {'lat': h[0].header['GLAT'],
                       'lon': h[0].header['GLON']}
         except KeyError:
-            latlon = None
+            if fn.name[:3] == 'PKR':
+                latlon = {'lat': 65.126,
+                          'lon': -147.479}
+            else:
+                latlon = None
 
     return latlon
 

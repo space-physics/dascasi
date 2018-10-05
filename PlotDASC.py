@@ -27,7 +27,7 @@ def main():
     p.add_argument('-t', '--tlim', help='only plot data in this range', nargs=2)
     p.add_argument('-a', '--azelfn', help='stem for DASC .fits azimuth calibration',
                    default='cal/PKR_DASC_20110112')
-    p.add_argument('-w', '--wavelength', help='select wavelength(s) to plot simultaneously [428 558 630]', type=int, nargs='+')
+    p.add_argument('-w', '--wavelength', help='select wavelength(s) to plot simultaneously [428 558 630]', nargs='+')
     p.add_argument('-m', '--minmax', help='set values outside these limits to 0, due to data corruption',
                    type=int, nargs=2, default=[350, 9000])
     p.add_argument('-c', '--cadence', help='set playback cadence to request times [sec]', type=float, default=5.)
