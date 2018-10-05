@@ -42,7 +42,7 @@ def test_script():
         subprocess.check_call(['DownloadDASC',
                                '2015-10-07T08:23:54',
                                '2015-10-07T08:23:56', str(R)])
-    except socket.gaierror as e:
+    except subprocess.CalledProcessError as e:
         pytest.skip(f"Bad internet connection?   {e}")
 
 
