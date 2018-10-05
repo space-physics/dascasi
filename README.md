@@ -23,9 +23,9 @@ pip install -e .
 ## Usage
 Many analysts may use the API directly, like:
 ```python
-import dascutils.io as dio
+import dascutils as du
 
-data = dio.load('tests/PKR_DASC_0558_20151007_082351.743.FITS')
+data = du.load('tests/PKR_DASC_0558_20151007_082351.743.FITS')
 ```
 This returns an [xarray.Dataset](http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html), which is like a "smart" Numpy array.
 The images are index by wavelength if it was specified in the data file, or 'unknown' otherwise.
@@ -35,14 +35,13 @@ also several metadata parameters are included like the location of the camera.
 
 ### Download raw DASC files by time
 
-Example download October 7, 2015 from 8:23 to 8:54 UTC:
+Example download October 7, 2015 from 8:23 to 8:54 UTC to `~/data/`:
 
 ```sh
-DownloadDASC 2015-10-07T08:23 2015-10-07T08:54
+DownloadDASC 2015-10-07T08:23 2015-10-07T08:54 ~/data
 ```
 
-* `-o` download directory 
-* `-c` overwrite existing files 
+* `-c` overwrite existing files
 * `-s` three-letter site acronym e.g. `PKR` for poker flat etc.
 
 ### Make movies from DASC raw data files
@@ -60,12 +59,12 @@ additional options include:
 
 ### Spatial registration (plate scale)
 
-The `cal/` directory contains `AZ` and `EL` files corresponding to each pixel. 
+The `cal/` directory contains `AZ` and `EL` files corresponding to each pixel.
 
 ```python
-import dascutils.io as dio
+import dascutils as du
 
-data = dio.load('tests/PKR_DASC_0558_20151007_082351.743.FITS', azelfn='cal/PKR_DASC_20110112')
+data = du.load('tests/PKR_DASC_0558_20151007_082351.743.FITS', azelfn='cal/PKR_DASC_20110112')
 ```
 
 now `data` includes data variables `az` and `el`, same shape as the image(s), along with camera position in `lat` `lon` `alt_m`.

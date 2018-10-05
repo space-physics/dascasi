@@ -13,7 +13,7 @@ import numpy as np
 from datetime import datetime
 from dateutil.parser import parse
 import xarray
-from typing import Union, Sequence, Dict, Optional, Tuple
+from typing import Union, Dict, Optional, Tuple
 try:
     from skimage.transform import downscale_local_mean
 except ImportError:
@@ -22,10 +22,10 @@ except ImportError:
 log = logging.getLogger('DASCutils-io')
 
 
-def load(fin: Union[Path, Sequence[Path]],
-         azelfn: Union[Path, Sequence[Path]]=None,
-         treq: np.ndarray=None,
-         wavelenreq: list=None, verbose: bool=False) -> xarray.Dataset:
+def load(fin: Path,
+         azelfn: Path = None,
+         treq: np.ndarray = None,
+         wavelenreq: list = None, verbose: bool = False) -> xarray.Dataset:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
@@ -125,7 +125,7 @@ def load(fin: Union[Path, Sequence[Path]],
                 """
                 DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
                 just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
-                since 14-bit \in {0,16384}.
+                since 14-bit {0,16384}.
                 Further, there was a RAID failure that filled the data files with random values.
                 Don Hampton says about 90% of data OK, but 10% NOK.
                 """
@@ -218,7 +218,7 @@ def load(fin: Union[Path, Sequence[Path]],
     return data
 
 
-def loadcal(azelfn: Union[Path, Sequence[Path]]) -> xarray.Dataset:
+def loadcal(azelfn: Path) -> xarray.Dataset:
     """Load DASC plate scale (degrees/pixel)"""
     if isinstance(azelfn, (str, Path)):
         azfn, elfn = stem2fn(azelfn)
