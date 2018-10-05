@@ -55,12 +55,14 @@ def test_full_load():
 
 
 def test_write_hdf5():
-    with tempfile.NamedTemporaryFile(suffix='.nc') as tfn:
+    with tempfile.TemporaryDirectory() as D:
+
+        ofn = Path(D) / 'test.nc'
 
         ref = du.load(R, azelstem, ('2012-01-03T08:32:02', '2016-01-04'),
-                      ofn=tfn.name)
+                      ofn=ofn)
 
-        dat = xarray.open_dataset(tfn.name, autoclose=True)
+        dat = xarray.open_dataset(ofn, autoclose=True)
 
         assert dat.equals(ref)
 

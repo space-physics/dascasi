@@ -2,6 +2,7 @@ import pytest
 import dascutils as du
 import tempfile
 import socket
+import ftplib
 import subprocess
 from pathlib import Path
 
@@ -33,7 +34,7 @@ def test_mod():
 
             assert len(flist) == 2
 
-    except socket.gaierror as e:
+    except (socket.gaierror, ftplib.error_temp) as e:
         pytest.skip(f"Bad internet connection?   {e}")
 
 
