@@ -37,6 +37,96 @@ def load(fin: Path,
 
     odir: filename to write converted NetCDF4 (HDF5) video to.
     """
+    flist = _slicereq(fin, treq, wavelenreq, verbose)
+
+    time = []
+    img: np.ndarray = []
+    wavelen: np.ndarray = []
+    for fn in flist:
+        try:
+            im, t, w = _loadimg(fn)
+        except (OSError, TypeError) as e:
+            log.warning(f'{fn} has error {e}')
+            continue
+
+        img.append(im)
+        time.append(t)
+        wavelen.append(w)
+
+# %% collect output
+    img = np.array(img)
+    time = np.array(time)  # this prevents xarray from using nanaseconds M8 datetime64 that is annoying.
+    wavelen = np.array(wavelen)
+    if wavelen.size == 0 or wavelen[0] is None:
+        wavelen = None
+
+    if wavelen is None:
+        data = xarray.Dataset({'unknown': (('time', 'y', 'x'), img)},
+                              coords={'time': time})
+        if data.time.size > 1:  # more than 1 image
+            data.attrs['cadence'] = time[1]-time[0]  # NOTE: assumes uniform kinetic rate
+        wavelen == ''
+    else:
+        data = None
+        for w in np.unique(wavelen):
+            d = xarray.Dataset({w: (('time', 'y', 'x'), img[wavelen == w, ...])},
+                               coords={'time': time[wavelen == w]})
+
+            if data is None:
+                data = d
+            else:
+                data = xarray.merge((data, d), join='outer')
+# %% metadata
+    data.attrs['filename'] = ' '.join((p.name for p in flist))
+    data.attrs['wavelength'] = wavelen
+# %% camera location
+    data = _camloc(flist[0], data)
+# %% az / el
+    data = _azel(azelfn, data)
+# %% HDF5 write
+    if isinstance(ofn, (str, Path)):
+        ofn = Path(ofn).expanduser()
+        if ofn.is_dir():
+            ofn = ofn / f'{flist[0].name[:3]}_{data.time[0].strftime("%Y-%m-%dT%H")}.nc'
+        else:
+            ofn.parent.mkdir(exist_ok=True)
+
+        print('writing', ofn)
+
+        enc = {k: ENC for k in data.data_vars}
+        data.to_netcdf(ofn, 'w', encoding=enc)
+
+    return data
+
+
+def _loadimg(fn: Path) -> Tuple[np.ndarray, datetime, str]:
+    """
+    DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
+    just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
+    since 14-bit {0,16384}.
+    Further, there was a RAID failure that filled the data files with random values.
+    Don Hampton says about 90% of data OK, but 10% NOK.
+    """
+    with fits.open(fn, mode='readonly', memmap=False) as h:
+        assert h[0].header['BITPIX'] == 16, 'this function assumes unsigned 16-bit data'
+        im = h[0].data.squeeze()  # Squeeze for old < 2011 files with 3-D, 1 image data.
+
+    assert im.ndim == 2, 'one image at a time please'
+
+    time = gettime(fn)
+# %% rotation based on year
+    k = -1 if time.year < 2012 else 1
+    im = np.rot90(im, k=k)
+# %% cleanup bad data
+    im[im > 16384] = 0  # extreme, corrupted data
+    im = im.clip(0, 16384).astype(np.uint16)  # discard bad values for 14-bit cameras.
+
+    return im, time, getwavelength(fn)
+
+
+def _slicereq(fin: Path, treq: np.ndarray,
+              wavelenreq: List[str]=None, verbose: bool=False) -> List[Path]:
+
     forig = fin
     warnings.filterwarnings('ignore', category=VerifyWarning)
 
@@ -114,84 +204,7 @@ def load(fin: Path,
     if verbose:
         print('Number of files', len(flist), 'with wavelengths', np.unique(wavelen))
 
-    time = []
-    img: np.ndarray = []
-    wavelen = []
-    for i, fn in enumerate(flist):
-        try:
-            with fits.open(fn, mode='readonly', memmap=False) as h:
-                if verbose and i == 0:
-                    print(h[0].header)
-
-                assert h[0].header['BITPIX'] == 16, 'this function assumes unsigned 16-bit data'
-
-                """
-                DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
-                just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
-                since 14-bit {0,16384}.
-                Further, there was a RAID failure that filled the data files with random values.
-                Don Hampton says about 90% of data OK, but 10% NOK.
-                """
-                im = h[0].data.squeeze()  # Squeeze for old < 2011 files with 3-D, 1 image data.
-                assert im.ndim == 2, 'one image at a time please'
-
-                im = np.rot90(im, k=1)  # NOTE: rotate by -1 to match online AVIs from UAF website.
-                im[im > 16384] = 0  # extreme, corrupted data
-                im = im.clip(0, 16384).astype(np.uint16)  # discard bad values for 14-bit cameras.
-
-            img.append(im)
-
-            # read headers at the end, as failures virtually always happens when reading the image (truncated files?) vs. header
-            time.append(gettime(fn))
-            wavelen.append(getwavelength(fn))
-
-        except (OSError, TypeError) as e:
-            log.warning(f'{fn} has error {e}')
-
-# %% collect output
-    img = np.array(img)
-    time = np.array(time)  # this prevents xarray from using nanaseconds M8 datetime64 that is annoying.
-    wavelen = np.array(wavelen)
-    if wavelen.size == 0 or wavelen[0] is None:
-        wavelen = None
-
-    if wavelen is None:
-        data = xarray.Dataset({'unknown': (('time', 'y', 'x'), img)},
-                              coords={'time': time})
-        if data.time.size > 1:  # more than 1 image
-            data.attrs['cadence'] = time[1]-time[0]  # NOTE: assumes uniform kinetic rate
-        wavelen == ''
-    else:
-        data = None
-        for w in np.unique(wavelen):
-            d = xarray.Dataset({w: (('time', 'y', 'x'), img[wavelen == w, ...])},
-                               coords={'time': time[wavelen == w]})
-
-            if data is None:
-                data = d
-            else:
-                data = xarray.merge((data, d), join='outer')
-# %% metadata
-    data.attrs['filename'] = ' '.join((p.name for p in flist))
-    data.attrs['wavelength'] = wavelen
-# %% camera location
-    data = _camloc(flist[0], data)
-# %% az / el
-    data = _azel(azelfn, data)
-# %% HDF5 write
-    if isinstance(ofn, (str, Path)):
-        ofn = Path(ofn).expanduser()
-        if ofn.is_dir():
-            ofn = ofn / f'{flist[0].name[:3]}_{data.time[0].strftime("%Y-%m-%dT%H")}.nc'
-        else:
-            ofn.parent.mkdir(exist_ok=True)
-
-        print('writing', ofn)
-
-        enc = {k: ENC for k in data.data_vars}
-        data.to_netcdf(ofn, 'w', encoding=enc)
-
-    return data
+    return flist
 
 
 def _camloc(fn: Path, data: xarray.Dataset) -> xarray.Dataset:

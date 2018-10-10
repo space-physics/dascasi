@@ -4,10 +4,10 @@ Created on Fri Sep 28 11:43:24 2018
 @author: smrak
 """
 import numpy as np
-from typing import Union
 from scipy.spatial import Delaunay
 import pymap3d as pm
 import datetime
+from typing import List
 from scipy.interpolate import griddata
 
 
@@ -27,7 +27,7 @@ def interpolateCoordinate(x: np.ndarray,
     return z
 
 
-def interpolate(values, vtx, wts, fill_value=np.nan):
+def interpolate(values, vtx, wts, fill_value: float=np.nan):
     ret = np.einsum('nj,nj->n', np.take(values, vtx), wts)
     ret[np.any(wts < 0, axis=1)] = fill_value
     return ret
@@ -42,7 +42,7 @@ def interpSpeedUpParams(x_in: np.ndarray, y_in: np.ndarray,
     https://stackoverflow.com/questions/20915502/speedup-scipy-griddata-for-multiple-interpolations-between-two-irregular-grids
     """
 
-    def _interpWeights(xyz, uvw, d=2):
+    def _interpWeights(xyz: np.ndarray, uvw: np.ndarray, d: int=2):
         tri = Delaunay(xyz)
         simplex = tri.find_simplex(uvw)
         vertices = np.take(tri.simplices, simplex, axis=0)
@@ -75,14 +75,14 @@ def interpSpeedUpParams(x_in: np.ndarray, y_in: np.ndarray,
     return xgrid, ygrid, vtx, wts
 
 
-def circular2lla(az: np.ndarray = None,
-                 el: Union[list, np.ndarray] = None,
-                 lon0: Union[int, float] = None,
-                 lat0: Union[int, float] = None,
-                 alt0: Union[int, float] = 0,
-                 mapping_altitude: Union[int, float] = 100.0):
+def circular2lla(az: np.ndarray,
+                 el: np.ndarray,
+                 lon0: float = None,
+                 lat0: float = None,
+                 alt0: float = 0,
+                 mapping_altitude: float = 100.0):
     """
-    Input mappiing_altitude parameter is in kilometers [km] !
+    Input mapping_altitude parameter is in kilometers [km] !
     Azimuth and elevation units must be in degrees !
     """
     # Convert mapping altitude to meters [m]
@@ -97,11 +97,12 @@ def circular2lla(az: np.ndarray = None,
     return lat, lon, alt
 
 
-def datetime2posix(dtime):
+def datetime2posix(dtime: List[datetime.datetime]) -> List[float]:
     """
     Convert an input list of datetime format timestamp to posix timestamp
+    https://docs.python.org/3/library/datetime.html#datetime.datetime.timestamp
     """
     if isinstance(dtime, datetime.datetime):
         dtime = [dtime]
 
-    return np.array([i.replace(tzinfo=datetime.timezone.utc).timestamp() for i in dtime])
+    return np.array([(t - datetime.datetime(1970, 1, 1)) / datetime.timedelta(seconds=1) for t in dtime])
