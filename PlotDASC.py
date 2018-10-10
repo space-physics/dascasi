@@ -10,6 +10,7 @@ import xarray
 from matplotlib.pyplot import show
 from argparse import ArgumentParser
 import dascutils as du
+import dascutils.projection as dp
 import dascutils.plots as dup
 
 
@@ -34,7 +35,7 @@ def main():
     imgs = du.load(p.indir, p.azelfn, p.tlim, p.wavelength, ofn=p.odir)
 
     if p.mappingAlt:
-        imgs = du.project_altitude(imgs, p.mappingAlt)
+        imgs = dp.project_altitude(imgs, p.mappingAlt)
 
     plotdasc(imgs, p.odir, p.cadence)
 

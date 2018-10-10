@@ -78,9 +78,12 @@ Typically that altitude is on the order of 100 km.
 The `dascutils.project_altitude()` function adds coordinates `mapping_lat` `mapping_lon` to the xarray.Dataset by:
 ```python
 import dascutils as du
+import dascutils.projection as dp
 
 data = du.load('myfile.FITS', azelfn='cal/PKR_DASC_20110112')
 
-data = du.project_altitude(data, 100.)  # for 100 km
+data = dp.project_altitude(data, 100.)  # for 100 km
 ```
+
+The `dascutils.projection` is a separate import because it calls extra Python modules that aren't needed for basic data loading.
 

@@ -3,7 +3,6 @@ from pathlib import Path
 import xarray
 import tempfile
 import pytest
-from pytest import approx
 from datetime import datetime
 #
 import dascutils as du
@@ -55,21 +54,8 @@ def test_full_load():
     assert data['0428'].shape == (1, 512, 512)
 
 
-def test_projection():
-    pytest.importorskip('pymap3d')
-    pytest.importorskip('scipy')
-
-    data = du.load(R, azelstem)
-
-    data = du.project_altitude(data, 100.)
-
-    assert data.mapping_alt_km == approx(100.)
-    assert data.mapping_lat[266, 247] == approx(65.12351)
-    assert data.mapping_lon[266, 247] == approx(-147.48196)
-
-
 def test_write_hdf5():
-    pytest.importorskip('netcdf4')
+    pytest.importorskip('netCDF4')
 
     with tempfile.TemporaryDirectory() as D:
 
