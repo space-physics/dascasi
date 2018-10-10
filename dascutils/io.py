@@ -3,7 +3,7 @@
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
-import sys
+import os
 from pathlib import Path
 import warnings  # corrupt FITS files let off a flood of AstroPy warnings
 from astropy.io.fits.verify import VerifyWarning
@@ -42,6 +42,8 @@ def load(fin: Path,
     time = []
     img: np.ndarray = []
     wavelen: np.ndarray = []
+
+    warnings.filterwarnings('ignore', category=VerifyWarning)
     for fn in flist:
         try:
             im, t, w = _loadimg(fn)
@@ -52,33 +54,26 @@ def load(fin: Path,
         img.append(im)
         time.append(t)
         wavelen.append(w)
+    warnings.resetwarnings()
 
 # %% collect output
     img = np.array(img)
-    time = np.array(time)  # this prevents xarray from using nanaseconds M8 datetime64 that is annoying.
+    time = np.array(time).astype('datetime64[ns]')  # necessary for netcdf4 write
     wavelen = np.array(wavelen)
-    if wavelen.size == 0 or wavelen[0] is None:
-        wavelen = None
 
-    if wavelen is None:
-        data = xarray.Dataset({'unknown': (('time', 'y', 'x'), img)},
-                              coords={'time': time})
-        if data.time.size > 1:  # more than 1 image
-            data.attrs['cadence'] = time[1]-time[0]  # NOTE: assumes uniform kinetic rate
-        wavelen == ''
-    else:
-        data = None
-        for w in np.unique(wavelen):
-            d = xarray.Dataset({w: (('time', 'y', 'x'), img[wavelen == w, ...])},
-                               coords={'time': time[wavelen == w]})
+    data: xarray.Dataset = None
+    for w in np.unique(wavelen):
+        d = xarray.Dataset({w: (('time', 'y', 'x'), img[wavelen == w, ...])},
+                           coords={'time': time[wavelen == w]})
+        # 'y': range(img.shape[1]),
+        # 'x': range(img.shape[2])})
 
-            if data is None:
-                data = d
-            else:
-                data = xarray.merge((data, d), join='outer')
+        if data is None:
+            data = d
+        else:
+            data = xarray.merge((data, d), join='outer')
 # %% metadata
     data.attrs['filename'] = ' '.join((p.name for p in flist))
-    data.attrs['wavelength'] = wavelen
 # %% camera location
     data = _camloc(flist[0], data)
 # %% az / el
@@ -87,7 +82,7 @@ def load(fin: Path,
     if isinstance(ofn, (str, Path)):
         ofn = Path(ofn).expanduser()
         if ofn.is_dir():
-            ofn = ofn / f'{flist[0].name[:3]}_{data.time[0].strftime("%Y-%m-%dT%H")}.nc'
+            ofn = ofn / f'{flist[0].name[:3]}_{data.time[0].values.astype(str)[:13]}.nc'
         else:
             ofn.parent.mkdir(exist_ok=True)
 
@@ -128,7 +123,6 @@ def _slicereq(fin: Path, treq: np.ndarray,
               wavelenreq: List[str]=None, verbose: bool=False) -> List[Path]:
 
     forig = fin
-    warnings.filterwarnings('ignore', category=VerifyWarning)
 
     if isinstance(fin, (str, Path)):
         fin = Path(fin).expanduser()
@@ -136,13 +130,13 @@ def _slicereq(fin: Path, treq: np.ndarray,
     if isinstance(fin, Path):
         if fin.is_dir():
             flist = list(fin.glob('*.FITS'))
-            if sys.platform != 'win32':
+            if os.name != 'nt':
                 flist += list(fin.glob('*.fits'))
             flist = sorted(flist)
         elif fin.is_file():
             flist = [fin]
         else:
-            raise FileNotFoundError(f'not sure what {flist} is')
+            raise FileNotFoundError(forig)
 # %% prefiltering files by user request for time or wavelength
     if treq is not None or wavelenreq is not None:
         time = []
@@ -191,7 +185,7 @@ def _slicereq(fin: Path, treq: np.ndarray,
         if len(flist) == 0:
             raise FileNotFoundError(f'no files found within time limits {treq}')
 # %% wavelength slice
-    if wavelenreq is not None and wavelen is not None:
+    if wavelenreq is not None and wavelen[0] != 'unknown':
         i = np.isin(wavelen, wavelenreq)
         flist = np.atleast_1d(flist[i])
 
@@ -234,7 +228,9 @@ def _azel(azelfn: Optional[Path], data: xarray.Dataset) -> xarray.Dataset:
 
     azel = loadcal(azelfn)
 
-    imgshape = data[data.wavelength[0]].shape[1:]
+    wavelen = list(data.data_vars)
+
+    imgshape = data[wavelen[0]].shape[1:]
 
     if azel['az'].shape != imgshape:
         downscale = (1, imgshape[0] // azel['az'].shape[0], imgshape[1] // azel['az'].shape[1])
@@ -245,18 +241,18 @@ def _azel(azelfn: Optional[Path], data: xarray.Dataset) -> xarray.Dataset:
         if downscale != 1:
             log.warning(f'downsizing images by factors of {downscale[1:]} to match calibration data')
 
-        if data.wavelength is None:
+        if len(wavelen) == 1 and wavelen[0] == 'unknown':
             if downscale != 1:
                 data['unknown'] = (('time', 'y', 'x'), downscale_local_mean(data['unknown'], downscale))
             else:
                 data['unknown'] = (('time', 'y', 'x'), data['unknown'])
         else:
             if downscale != 1:
-                for w in np.unique(data.wavelength):
+                for w in np.unique(wavelen):
                     data[w] = downscale_local_mean(data[w], downscale)
 
-    data['az'] = azel['az']
-    data['el'] = azel['el']
+    data.coords['az'] = (('y', 'x'), azel['az'])
+    data.coords['el'] = (('y', 'x'), azel['el'])
 
     return data
 
@@ -316,7 +312,7 @@ def getwavelength(fn: Path) -> str:
         try:
             w = h[0].header['FILTWAV']
         except KeyError:
-            w = None
+            w = 'unknown'
 
     return w
 

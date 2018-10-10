@@ -71,3 +71,16 @@ now `data` includes data variables `az` and `el`, same shape as the image(s), al
 
 * Be sure you know if you're using magnetic north or geographic north, or you'll see a rotation by the declination.
 * Note the date in the filename--perhaps the camera was moved since before or long after that date?
+
+### Map Projection
+A common task in auroral and airglow analysis is to project the image to an imaginary alttiude, that is, as if all the brightness were coming from that altitude.
+Typically that altitude is on the order of 100 km.
+The `dascutils.project_altitude()` function adds coordinates `mapping_lat` `mapping_lon` to the xarray.Dataset by:
+```python
+import dascutils as du
+
+data = du.load('myfile.FITS', azelfn='cal/PKR_DASC_20110112')
+
+data = du.project_altitude(data, 100.)  # for 100 km
+```
+

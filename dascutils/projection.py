@@ -7,35 +7,59 @@ import numpy as np
 from scipy.spatial import Delaunay
 import pymap3d as pm
 import datetime
-from typing import List
+from typing import List, Tuple, Sequence
 from scipy.interpolate import griddata
+import xarray
+
+
+def project_altitude(imgs: xarray.Dataset, mapping_altitude_km: float = None) -> xarray.Dataset:
+    """
+    takes image az/el and maps to lat/lon at a specific altitude
+    This is a common approximation used for first-order auroral / airglow analysis
+    """
+
+    if mapping_altitude_km is None:
+        mapping_altitude_km = 100
+    # Get rid of NaNs in the coordinates' arrays
+    eli = interpolateCoordinate(imgs['el'].values, method='nearest')
+    azi = interpolateCoordinate(imgs['az'].values, method='nearest')
+    # Convert Coordinates to WSG84
+    lat, lon, alt = circular2lla(azi, eli, imgs.lat, imgs.lon,
+                                 mapping_altitude_km=mapping_altitude_km)
+
+    imgs.coords['mapping_lat'] = (('y', 'x'), lat)
+    imgs.coords['mapping_lon'] = (('y', 'x'), lon)
+    imgs.attrs['mapping_alt_km'] = mapping_altitude_km
+
+    return imgs
 
 
 def interpolateCoordinate(x: np.ndarray,
-                          N: int = 512,
-                          method: str = 'linear'):
+                          method: str = 'linear') -> np.ndarray:
 
     x0, y0 = np.meshgrid(np.arange(x.shape[0]),
                          np.arange(x.shape[1]))
-    mask = np.ma.masked_invalid(x)
-    x0 = x0[~mask.mask]
-    y0 = y0[~mask.mask]
-    X = x[~mask.mask]
-    x1, y1 = np.meshgrid(np.arange(N), np.arange(N))
+    good = np.isfinite(x)
+    x0 = x0[good]
+    y0 = y0[good]
+    X = x[good]
+
+    x1, y1 = np.meshgrid(range(x.shape[0]), range(x.shape[1]))
     z = griddata((x0, y0), X.ravel(), (x1, y1), method=method)
 
     return z
 
 
-def interpolate(values, vtx, wts, fill_value: float=np.nan):
+def interpolate(values, vtx, wts, fill_value: float=np.nan) -> np.ndarray:
     ret = np.einsum('nj,nj->n', np.take(values, vtx), wts)
     ret[np.any(wts < 0, axis=1)] = fill_value
+
     return ret
 
 
 def interpSpeedUpParams(x_in: np.ndarray, y_in: np.ndarray,
                         provisional_image: np.ndarray,
-                        N: int = 512):
+                        N: int = 512) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     The speedup is based on the scipy.interpolate.griddata algorithm. Thorough
     explanation is on the stackoverflow
@@ -75,29 +99,26 @@ def interpSpeedUpParams(x_in: np.ndarray, y_in: np.ndarray,
     return xgrid, ygrid, vtx, wts
 
 
-def circular2lla(az: np.ndarray,
-                 el: np.ndarray,
-                 lon0: float = None,
-                 lat0: float = None,
-                 alt0: float = 0,
-                 mapping_altitude: float = 100.0):
+def circular2lla(az: np.ndarray, el: np.ndarray,
+                 lat0: float, lon0: float, alt0: float = 0,
+                 mapping_altitude_km: float = 100.0) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Input mapping_altitude parameter is in kilometers [km] !
     Azimuth and elevation units must be in degrees !
     """
     # Convert mapping altitude to meters [m]
-    mapping_altitude = mapping_altitude * 1e3
+    malt_m = mapping_altitude_km * 1e3
     # Make sure the alt0 is a number
-    alt0 = 0 if (alt0 is None) else alt0
+    alt0 = 0 if alt0 is None else alt0
     # Map to altitude
-    r = mapping_altitude / np.sin(np.deg2rad(el))
+    r = malt_m / np.sin(np.radians(el))
     # Convert to WSG
     lat, lon, alt = pm.aer2geodetic(az, el, r, lat0, lon0, alt0)
 
     return lat, lon, alt
 
 
-def datetime2posix(dtime: List[datetime.datetime]) -> List[float]:
+def datetime2posix(dtime: Sequence[datetime.datetime]) -> List[float]:
     """
     Convert an input list of datetime format timestamp to posix timestamp
     https://docs.python.org/3/library/datetime.html#datetime.datetime.timestamp

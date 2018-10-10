@@ -2,7 +2,7 @@ from pathlib import Path
 import xarray
 import numpy as np
 from datetime import timedelta, datetime
-from matplotlib.pyplot import draw, pause, figure, close
+from matplotlib.pyplot import draw, pause, figure
 from matplotlib.colors import LogNorm
 #
 try:
@@ -19,21 +19,13 @@ def histogram_dasc(imgs: xarray.Dataset, odir=None):
     if odir is not None:
         odir = Path(odir).expanduser()
 
-    anyplot = False
     fg = figure(figsize=(15, 5))
     axs = fg.subplots(1, 3)
     for a, i in zip(axs, imgs.data_vars):
-        if i in ('az', 'el'):
-            continue
-        else:
-            anyplot = True
         a.hist(imgs[i].dropna(dim='time', how='all').values.ravel(), bins=128)
         a.set_yscale('log')
         a.set_title(f'$\lambda={i}$ nm')
         a.set_xlabel('14-bit data numbers')
-
-    if not anyplot:
-        close(fg)
 
     if odir:
         ofn = odir/'DASChistogram.png'
@@ -47,12 +39,11 @@ def moviedasc(imgs: xarray.Dataset, odir: Path, cadence: float, rows=None, cols=
         print('writing to', odir)
         odir = Path(odir).expanduser()
 
+    wavelen = list(imgs.data_vars)
+
     fg = figure(figsize=(15, 5))
 
-    if imgs.wavelength is not None:
-        axs = np.atleast_1d(fg.subplots(1, len(np.unique(imgs.wavelength))))
-    else:
-        axs = [fg.gca()]
+    axs = np.atleast_1d(fg.subplots(1, len(np.unique(wavelen))))
 
     if imgs.time.dtype == 'M8[ns]':
         time = [datetime.utcfromtimestamp(t/1e9) for t in imgs.time.values.astype(int)]
@@ -63,7 +54,7 @@ def moviedasc(imgs: xarray.Dataset, odir: Path, cadence: float, rows=None, cols=
         Hi = []
         Ht = []
         for ax, w, mm, c in zip(axs,
-                                np.unique(imgs.wavelength),
+                                np.unique(wavelen),
                                 ((350, 800), (350, 9000), (350, 900)),
                                 ('b', 'g', 'r')):
             # ax.axis('off') #this also removes xlabel,ylabel
@@ -100,7 +91,7 @@ def moviedasc(imgs: xarray.Dataset, odir: Path, cadence: float, rows=None, cols=
     dt = timedelta(seconds=cadence)
     while t <= time[-1]:
         if 'unknown' not in imgs.data_vars:
-            for w, hi, ht in zip(np.unique(imgs.wavelength), Hi, Ht):
+            for w, hi, ht in zip(np.unique(wavelen), Hi, Ht):
                 im = imgs[w].dropna(dim='time', how='all').sel(time=t, method='nearest')
                 hi.set_data(im)
                 try:

@@ -3,15 +3,13 @@
 Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS files
 
 example:
-python PlotDASC.py tests/PKR_DASC_0428_20151007_082305.930.FITS
-azfn = R.parent/'cal/PKR_DASC_20110112_AZ_10deg.fits
-elfn = R.parent/'cal/PKR_DASC_20110112_EL_10deg.fits
+python PlotDASC.py tests/PKR_DASC_0428_20151007_082355.961.FITS
 """
 from pathlib import Path
 import xarray
 from matplotlib.pyplot import show
 from argparse import ArgumentParser
-import dascutils.io as dio
+import dascutils as du
 import dascutils.plots as dup
 
 
@@ -28,13 +26,15 @@ def main():
     p.add_argument('-a', '--azelfn', help='stem for DASC .fits azimuth calibration',
                    default='cal/PKR_DASC_20110112')
     p.add_argument('-w', '--wavelength', help='select wavelength(s) to plot simultaneously [428 558 630]', nargs='+')
-    p.add_argument('-m', '--minmax', help='set values outside these limits to 0, due to data corruption',
-                   type=int, nargs=2, default=[350, 9000])
     p.add_argument('-c', '--cadence', help='set playback cadence to request times [sec]', type=float, default=5.)
     p.add_argument('-o', '--odir', help='output directory')
+    p.add_argument('-map', '--mappingAlt', help='mapping altitude to project image to [km]', type=float)
     p = p.parse_args()
 
-    imgs = dio.load(p.indir, p.azelfn, p.tlim, p.wavelength)
+    imgs = du.load(p.indir, p.azelfn, p.tlim, p.wavelength, ofn=p.odir)
+
+    if p.mappingAlt:
+        imgs = du.project_altitude(imgs, p.mappingAlt)
 
     plotdasc(imgs, p.odir, p.cadence)
 
