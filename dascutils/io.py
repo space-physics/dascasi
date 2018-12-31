@@ -120,7 +120,7 @@ def _loadimg(fn: Path) -> Tuple[np.ndarray, datetime, str]:
 
 
 def _slicereq(fin: Path, treq: np.ndarray,
-              wavelenreq: List[str]=None, verbose: bool=False) -> List[Path]:
+              wavelenreq: List[str] = None, verbose: bool = False) -> List[Path]:
 
     forig = fin
 

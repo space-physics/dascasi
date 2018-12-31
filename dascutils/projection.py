@@ -50,7 +50,7 @@ def interpolateCoordinate(x: np.ndarray,
     return z
 
 
-def interpolate(values, vtx, wts, fill_value: float=np.nan) -> np.ndarray:
+def interpolate(values, vtx, wts, fill_value: float = np.nan) -> np.ndarray:
     ret = np.einsum('nj,nj->n', np.take(values, vtx), wts)
     ret[np.any(wts < 0, axis=1)] = fill_value
 
@@ -66,7 +66,7 @@ def interpSpeedUpParams(x_in: np.ndarray, y_in: np.ndarray,
     https://stackoverflow.com/questions/20915502/speedup-scipy-griddata-for-multiple-interpolations-between-two-irregular-grids
     """
 
-    def _interpWeights(xyz: np.ndarray, uvw: np.ndarray, d: int=2):
+    def _interpWeights(xyz: np.ndarray, uvw: np.ndarray, d: int = 2):
         tri = Delaunay(xyz)
         simplex = tri.find_simplex(uvw)
         vertices = np.take(tri.simplices, simplex, axis=0)

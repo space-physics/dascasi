@@ -63,7 +63,7 @@ def test_write_hdf5():
 
         ref = du.load(R, azelstem, ofn=ofn)
 
-        dat = xarray.open_dataset(ofn, autoclose=True)
+        dat = xarray.open_dataset(ofn)
 
         assert dat.equals(ref)
 

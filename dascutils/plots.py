@@ -24,7 +24,7 @@ def histogram_dasc(imgs: xarray.Dataset, odir=None):
     for a, i in zip(axs, imgs.data_vars):
         a.hist(imgs[i].dropna(dim='time', how='all').values.ravel(), bins=128)
         a.set_yscale('log')
-        a.set_title(f'$\lambda={i}$ nm')
+        a.set_title(r'$\lambda=' + f'{i}$ nm')
         a.set_xlabel('14-bit data numbers')
 
     if odir:
