@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from pathlib import Path
 import xarray
-import tempfile
 import pytest
 from datetime import datetime
 #
@@ -12,60 +11,62 @@ R = Path(__file__).parent
 azelstem = R.parent/'cal/PKR_DASC_20110112'
 
 
-def test_basic_load():
-    # %% expected fail
+def test_nonexistent_file(tmp_path):
     with pytest.raises(FileNotFoundError):
-        with tempfile.TemporaryDirectory() as d:
-            data = du.load(d)
-# %% most basic
-    data = du.load(R)
-    assert isinstance(data, xarray.Dataset)
-
-    d428 = data['0428'].dropna(dim='time')
-    assert d428.shape == (1, 512, 512)
-
-    d558 = data['0558'].dropna(dim='time')
-    assert d558.shape == (2, 512, 512)
-
-    d630 = data['0630'].dropna(dim='time')
-    assert d630.shape == (1, 512, 512)
-
-    assert 'az' not in data.data_vars
-    assert data.lat == 65.126
-    assert data.lon == -147.479
-
-    assert d630.time.values.astype('datetime64[us]').astype(datetime) == datetime(2015, 10, 7, 8, 23, 59, 586000)
+        du.load(tmp_path)
 
 
-def test_full_load():
-    # %% single time request
-    data = du.load(R, azelstem, '2012-01-03T08:32:02')
-    assert data['0558'].shape == (1, 512, 512)
-    assert data.az.shape == (512, 512)
-    assert data.el.shape == (512, 512)
-    assert data.time.values.astype('datetime64[us]').astype(datetime) == datetime(2015, 10, 7, 8, 23, 51, 743000)
-# %% multi-time request and wavelength
+@pytest.mark.parametrize('wavelength, L, t',
+                         [('0428', 1, datetime(2015, 10, 7, 8, 23, 55, 961000)),
+                          ('0558', 2, datetime(2015, 10, 7, 8, 23, 51, 743000)),
+                          ('0630', 1, datetime(2015, 10, 7, 8, 23, 59, 586000))])
+def test_basic_load(wavelength, L, t):
+    dset = du.load(R)
+    assert isinstance(dset, xarray.Dataset)
+
+    data = dset[wavelength].dropna(dim='time')
+    assert data.shape == (L, 512, 512)
+
+    assert 'az' not in dset.data_vars
+    assert dset.lat == 65.126
+    assert dset.lon == -147.479
+
+    assert data.time.values[0].astype('datetime64[us]').astype(datetime) == t
+
+
+def test_timerange_and_wavelength():
     data = du.load(R, azelstem,
                    treq=('2012-01-03T08:32:02', '2016-01-04'),
                    wavelenreq='0558')
     assert data['0558'].shape == (2, 512, 512)
-# %% wavelength request
-    data = du.load(R, azelstem, wavelenreq='0428')
-    assert data['0428'].shape == (1, 512, 512)
 
 
-def test_write_hdf5():
+@pytest.mark.parametrize('wavelength, L', [('0558', 1)])
+def test_singletime(wavelength, L):
+    data = du.load(R, azelstem, '2012-01-03T08:32:02')
+    assert data[wavelength].shape == (L, 512, 512)
+    assert data.az.shape == (512, 512)
+    assert data.el.shape == (512, 512)
+    assert data.time.values.astype('datetime64[us]').astype(datetime) == datetime(2015, 10, 7, 8, 23, 51, 743000)
+
+
+@pytest.mark.parametrize('wavelength, L', [('0428', 1), ('0558', 2), ('0630', 1)])
+def test_full_load(wavelength, L):
+    # %% wavelength request
+    data = du.load(R, azelstem, wavelenreq=wavelength)
+    assert data[wavelength].shape == (L, 512, 512)
+
+
+def test_write_hdf5(tmp_path):
     pytest.importorskip('netCDF4')
 
-    with tempfile.TemporaryDirectory() as D:
+    ofn = tmp_path / 'test.nc'
 
-        ofn = Path(D) / 'test.nc'
+    ref = du.load(R, azelstem, ofn=ofn)
 
-        ref = du.load(R, azelstem, ofn=ofn)
+    dat = xarray.open_dataset(ofn)
 
-        dat = xarray.open_dataset(ofn)
-
-        assert dat.equals(ref)
+    assert dat.equals(ref)
 
 
 if __name__ == '__main__':
