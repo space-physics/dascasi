@@ -31,7 +31,7 @@ def test_mod(tmp_path, wavelength):
 
         assert len(flist) == len(wavelength)
 
-    except (socket.gaierror, ftplib.error_temp) as e:
+    except (socket.gaierror, socket.timeout, ftplib.error_temp) as e:
         pytest.skip(f"Bad internet connection?   {e}")
 
 
