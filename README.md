@@ -1,7 +1,6 @@
 [![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
-[![image](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
-[![image](https://travis-ci.org/scivision/dascutils.svg?branch=master)](https://travis-ci.org/scivision/dascutils)
-[![image](https://coveralls.io/repos/github/scivision/dascutils/badge.svg?branch=master)](https://coveralls.io/github/scivision/dascutils?branch=master)
+[![Build Status](https://travis-ci.com/space-physics/dascutils.svg?branch=master)](https://travis-ci.com/space-physics/dascutils)
+[![Coverage Status](https://coveralls.io/repos/github/space-physics/dascutils/badge.svg?branch=master)](https://coveralls.io/github/space-physics/dascutils?branch=master)
 [![image](https://ci.appveyor.com/api/projects/status/xrtb6fc3d4ojp507?svg=true)](https://ci.appveyor.com/project/scivision/dascutils)
 [![Maintainability](https://api.codeclimate.com/v1/badges/36b08deedc7d2bf750c8/maintainability)](https://codeclimate.com/github/scivision/dascutils/maintainability)
 
