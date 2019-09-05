@@ -142,7 +142,7 @@ def _slicereq(fin: Path, treq: np.ndarray,
         time = []
         wavelen: np.ndarray = []
         flist1 = []
-        for i, fn in enumerate(flist):
+        for fn in flist:
             try:
                 time.append(gettime(fn))
                 wavelen.append(getwavelength(fn))
