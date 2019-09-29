@@ -1,6 +1,6 @@
 [![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
 
-[![Actions Status](https://github.com/space-physics/dascutils/ci_python/badge.svg)](https://github.com/space-physics/dascutils/actions)
+[![Actions Status](https://github.com/space-physics/dascutils/ci/badge.svg)](https://github.com/space-physics/dascutils/actions)
 
 [![PyPi versions](https://img.shields.io/pypi/pyversions/dascutils.svg)](https://pypi.python.org/pypi/dascutils)
 [![PyPi Download stats](http://pepy.tech/badge/dascutils)](http://pepy.tech/project/dascutils)
