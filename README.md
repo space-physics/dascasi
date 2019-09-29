@@ -1,8 +1,7 @@
 [![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
 
-[![Build Status](https://travis-ci.com/space-physics/dascutils.svg?branch=master)](https://travis-ci.com/space-physics/dascutils)
-[![Coverage Status](https://coveralls.io/repos/github/space-physics/dascutils/badge.svg?branch=master)](https://coveralls.io/github/space-physics/dascutils?branch=master)
-[![image](https://ci.appveyor.com/api/projects/status/xrtb6fc3d4ojp507?svg=true)](https://ci.appveyor.com/project/scivision/dascutils)
+[![Actions Status](https://github.com/space-physics/dascutils/ci/badge.svg)](https://github.com/space-physics/dascutils/actions)
+
 
 # DASC all-sky camera utilitiess
 
@@ -16,7 +15,12 @@ The raw data FITS are one image per file.
 ## Install
 
 ```sh
-pip install -e .
+pip install dascutils
+```
+
+or for development version, `git clone` this repo and then
+```sh
+pip install -e dascutils
 ```
 
 ## Usage

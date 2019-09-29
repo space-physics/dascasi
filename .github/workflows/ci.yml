@@ -1,61 +1,32 @@
-name: ci
+name: ci_python
 
 on: [push, pull_request]
 
 jobs:
 
-  lint:
+  linux:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 3
-      matrix:
-        python-version: [3.6, 3.7]
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    - uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: pip install -e .[lint]
-    - name: Lint
-      run: flake8
-    - name: Type check
-      run: mypy .
+        python-version: '3.x'
+    - run: pip install .[tests,lint]
+    - run: flake8
+    - run: mypy .
+    - run: pytest -r a -v
+      working-directory: tests
 
   integration:
-    needs: [lint]
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 3
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.7]
+        os: [windows-latest, macos-latest]
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    - uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: pip install -e .[tests,io]
-    - name: run Pytest
-      run: pytest -r a -v
-
-  install:
-    needs: [integration]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Install Python package
-      run: python setup.py install
-    - name: run Pytest
-      run: |
-        cd ${HOME}
-        python -m pip install pytest
-        python -m pip install netcdf4
-        python -m pytest ${GITHUB_WORKSPACE} -r a -v
+        python-version: '3.x'
+    - run: pip install .[tests]
+    - run: pytest -r a -v
+      working-directory: tests
