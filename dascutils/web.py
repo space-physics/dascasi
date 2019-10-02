@@ -4,21 +4,17 @@ from time import sleep
 import ftplib
 from dateutil.parser import parse
 from datetime import datetime
-from typing import Tuple, List
+import typing
 from urllib.parse import urlparse
 
-HOST = 'ftp://optics.gi.alaska.edu'
+HOST = "ftp://optics.gi.alaska.edu"
 
 
-def download(startend: Tuple[datetime, datetime],
-             site: str, odir: Path,
-             host: str = None,
-             wavelen: str = None,
-             overwrite: bool = False) -> List[Path]:
+def download(
+    startend: typing.Tuple[datetime, datetime], site: str, odir: Path, host: str = None, wavelen: str = None
+) -> typing.List[Path]:
     """
     startend: tuple of datetime
-    year,month,day: integer
-    hour, minute:  start,stop integer len == 2
     """
     if not host:
         host = HOST
@@ -29,63 +25,70 @@ def download(startend: Tuple[datetime, datetime],
     end = parse(startend[1]) if isinstance(startend[1], str) else startend[1]  # type: ignore
 
     if end < start:
-        raise ValueError('start time must be before end time!')
+        raise ValueError("start time must be before end time!")
 
     parsed = urlparse(host)
     ftop = parsed[1]
     fpath = parsed[2] + site
     odir = Path(odir).expanduser().resolve()
-    odir.mkdir(exist_ok=True)
-# %% get available files for this day
-    rparent = f'{fpath}/DASC/RAW/{start.year:4d}'
-    rday = f'{start.year:4d}{start.month:02d}{start.day:02d}'
-# %% wavelength
+    odir.mkdir(exist_ok=True, parents=True)
+    # %% get available files for this day
+    rparent = f"{fpath}/DASC/RAW/{start.year:4d}"
+    rday = f"{start.year:4d}{start.month:02d}{start.day:02d}"
+    # %% wavelength
     if wavelen is None:
         pass
     elif isinstance(wavelen, int):
-        wavelen = f'{wavelen:04d}'
+        wavelen = f"{wavelen:04d}"
     elif isinstance(wavelen, str):
         if len(wavelen) != 4:
-            raise ValueError('expecting 4-character wavelength spec e.g. 0428')
+            raise ValueError("expecting 4-character wavelength spec e.g. 0428")
     elif not isinstance(wavelen, (tuple, list)):
-        raise TypeError('expecting 4-character wavelength spec e.g. 0428')
+        raise TypeError("expecting 4-character wavelength spec e.g. 0428")
 
     flist = []
 
-    with ftplib.FTP(ftop, 'anonymous', 'guest', timeout=15) as F:
+    with ftplib.FTP(ftop, "anonymous", "guest", timeout=15) as F:
         F.cwd(rparent)
         dlist = F.nlst()
         if rday not in dlist:
-            raise FileNotFoundError(f'{rday} does not exist under {host}/{rparent}')
+            raise FileNotFoundError(f"{rday} does not exist under {host}/{rparent}")
 
-        print('downloading to', odir)
+        print("downloading to", odir)
         F.cwd(rday)
-        dlist = F.nlst()
 
-        print(f'remote filesize approx. {F.size(dlist[0])/1000} kB.')  # type: ignore
-
-        for rfn in dlist:
-            # %% qualifiers
-            if wavelen and rfn[9:13] not in wavelen:
-                continue
-
-            tfile = datetime.strptime(rfn[14:-9], '%Y%m%d_%H%M%S')
-            if tfile < start or tfile > end:
-                continue
-# %% download file
-            ofn = odir / rfn
+        for filename in get_filenames(F.nlst(), wavelen, start, end):
+            # %% download file
+            ofn = odir / filename
             flist.append(ofn)
 
-            if not overwrite:
-                if ofn.is_file():  # do filesizes match, if so, skip download
-                    rsize = F.size(rfn)
-                    if ofn.stat().st_size == rsize:
-                        print('SKIPPING existing', ofn)
-                        continue
+            if skip_exist(ofn, F):
+                continue
 
             print(ofn)
-            with ofn.open('wb') as h:
-                F.retrbinary(f'RETR {rfn}', h.write)
-                sleep(1)  # anti-leech
+            with ofn.open("wb") as h:
+                F.retrbinary(f"RETR {filename}", h.write)
+                sleep(0.5)  # anti-leech
 
     return flist
+
+
+def skip_exist(filename: Path, F) -> bool:
+    if not filename.is_file():
+        return False
+    if filename.stat().st_size == F.size(filename.name):
+        print("SKIPPING existing", filename)
+        return True
+    return False
+
+
+def get_filenames(days: typing.Sequence[str], wavelen: str, start: datetime, end: datetime) -> typing.Iterator[str]:
+    for filename in days:
+        # %% qualifiers
+        if wavelen and filename[9:13] not in wavelen:
+            continue
+
+        tfile = datetime.strptime(filename[14:-9], "%Y%m%d_%H%M%S")
+        if tfile < start or tfile > end:
+            continue
+        yield filename

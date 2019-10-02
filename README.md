@@ -6,7 +6,7 @@
 [![PyPi Download stats](http://pepy.tech/badge/dascutils)](http://pepy.tech/project/dascutils)
 
 
-# DASC all-sky camera utilitiess
+# DASC all-sky camera utilities
 
 Utilities for plotting, saving, analyzing the Poker Flat Research Range Digital All Sky Camera. (Other locations, too).
 
