@@ -1,11 +1,17 @@
 #!/usr/bin/env python
+"""
+I tried to parallelize this via threading etc, but the FTP server just trips the anti-leech
+and sends a bunch of zero-sized files.
+
+Best to download once and convert FITS stack to HDF5.
+"""
 from pathlib import Path
 from time import sleep
 import ftplib
-from dateutil.parser import parse
 from datetime import datetime
 import typing
 from urllib.parse import urlparse
+from .utils import time_bounds
 
 HOST = "ftp://optics.gi.alaska.edu"
 
@@ -21,11 +27,7 @@ def download(
 
     assert len(startend) == 2
 
-    start = parse(startend[0]) if isinstance(startend[0], str) else startend[0]  # type: ignore
-    end = parse(startend[1]) if isinstance(startend[1], str) else startend[1]  # type: ignore
-
-    if end < start:
-        raise ValueError("start time must be before end time!")
+    start, end = time_bounds(startend)
 
     parsed = urlparse(host)
     ftop = parsed[1]

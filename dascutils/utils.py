@@ -8,10 +8,21 @@ Created on Fri Sep 28 11:43:24 2018
 import xarray
 import typing
 import numpy as np
-import datetime
+from datetime import datetime
+from dateutil.parser import parse
 from scipy.spatial import Delaunay
 from pymap3d import aer2geodetic
 from scipy.interpolate import griddata
+
+
+def time_bounds(startend: typing.Tuple[datetime, datetime]) -> typing.Tuple[datetime, datetime]:
+    start = parse(startend[0]) if isinstance(startend[0], str) else startend[0]  # type: ignore
+    end = parse(startend[1]) if isinstance(startend[1], str) else startend[1]  # type: ignore
+
+    if end < start:
+        raise ValueError("start time must be before end time!")
+
+    return start, end
 
 
 def interpolateCoordinate(x: np.ndarray = None, N: int = 512, method: str = "linear"):
@@ -109,7 +120,7 @@ def interpSpeedUp(x_in: np.ndarray = None, y_in: np.ndarray = None, image: np.nd
     # coordinates based on the simplex for the new grids are computed
     if verbose:
         print("Computing intepolation weights")
-    t0 = datetime.datetime.now()
+    t0 = datetime.now()
     vtx, wts = _interpWeights(xy, uv)
     # Interpolate N images
     Zim = np.copy(image) * np.nan
@@ -123,7 +134,7 @@ def interpSpeedUp(x_in: np.ndarray = None, y_in: np.ndarray = None, image: np.nd
     else:
         Zim = _interpolate(image, vtx, wts).reshape(N, N)
     if verbose:
-        print("Interpolation done in {} seconds".format((datetime.datetime.now() - t0).total_seconds()))
+        print("Interpolation done in {} seconds".format((datetime.now() - t0).total_seconds()))
     # Return grids and interp points with associative weights
     return xgrid, ygrid, Zim
 
@@ -159,12 +170,12 @@ def getPixelBrightness(
     obs_lat: np.ndarray = None,
     coordinates: bool = False,
 ):
-    assert isinstance(obstimes[0], datetime.datetime)
+    assert isinstance(obstimes[0], datetime)
     # Coordinates
     dasc_lat = D.lat.values
     dasc_lon = D.lon.values
     # DASC obstimes
-    dasc_time = np.array([datetime.datetime.utcfromtimestamp(t) for t in D.time.values])
+    dasc_time = np.array([datetime.utcfromtimestamp(t) for t in D.time.values])
     # Filter according to time requirement
     treq = (dasc_time >= obstimes[0]) & (dasc_time <= obstimes[-1])
     Dtimes = dasc_time[treq]
@@ -198,20 +209,20 @@ def getPixelBrightness(
         return Dtimes, pixel_brightness
 
 
-def getDASCimage(D: xarray.Dataset = None, ix: typing.Union[datetime.datetime, int] = None, coordinate: str = "wsg"):
-    assert isinstance(ix, (datetime.datetime, int))
+def getDASCimage(D: xarray.Dataset = None, ix: typing.Union[datetime, int] = None, coordinate: str = "wsg"):
+    assert isinstance(ix, (datetime, int))
     # Find the closes entrance for the given timestamp
-    if isinstance(ix, datetime.datetime):
+    if isinstance(ix, datetime):
         T = datetime2posix(ix)[0]
         Di = D.sel(time=T, method="nearest")
-        dasc_dt = datetime.datetime.utcfromtimestamp(Di.time.values)
+        dasc_dt = datetime.utcfromtimestamp(Di.time.values)
         if coordinate == "polar":
             img = Di.polar.values
         elif coordinate == "wsg":
             img = Di.image.values
     # Find for the given index
     if isinstance(ix, int):
-        dasc_dt = datetime.datetime.utcfromtimestamp(D.time.values[ix])
+        dasc_dt = datetime.utcfromtimestamp(D.time.values[ix])
         if coordinate == "polar":
             img = D.polar.values[ix]
         elif coordinate == "wsg":
@@ -224,6 +235,6 @@ def datetime2posix(dtime):
     """
     Convert an input list of datetime format timestamp to posix timestamp
     """
-    if isinstance(dtime, datetime.datetime):
+    if isinstance(dtime, datetime):
         dtime = [dtime]
     return np.array([i.replace(tzinfo=datetime.timezone.utc).timestamp() for i in dtime])

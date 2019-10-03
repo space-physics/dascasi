@@ -28,11 +28,10 @@ def main():
                    default='cal/PKR_DASC_20110112')
     p.add_argument('-w', '--wavelength', help='select wavelength(s) to plot simultaneously [428 558 630]', nargs='+')
     p.add_argument('-c', '--cadence', help='set playback cadence to request times [sec]', type=float, default=5.)
-    p.add_argument('-o', '--odir', help='output directory')
     p.add_argument('-map', '--mappingAlt', help='mapping altitude to project image to [km]', type=float)
     p = p.parse_args()
 
-    imgs = du.load(p.indir, p.azelfn, p.tlim, p.wavelength, ofn=p.odir)
+    imgs = du.load(p.indir, p.azelfn, p.tlim, p.wavelength)
 
     if p.mappingAlt:
         imgs = dp.project_altitude(imgs, p.mappingAlt)
