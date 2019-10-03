@@ -17,12 +17,11 @@ The raw data FITS are one image per file.
 
 ## Install
 
-```sh
-pip install dascutils
-```
+Most people will find it useful to have the example scripts and the tests built into the Git repo.
 
-or for development version, `git clone` this repo and then
 ```sh
+git clone https://github.com/space-physics/dascutils/actions
+
 pip install -e dascutils
 ```
 
@@ -52,7 +51,7 @@ Now we give several examples.
 Download Poker Flat Research Range "PKR" October 7, 2015 from 8:23 to 8:54 UTC to `~/data/`:
 
 ```sh
-python DownloadDASC.py PKR 2015-10-07T08:23 2015-10-07T08:54 ~/data
+python dascutils/DownloadDASC.py PKR 2015-10-07T08:23 2015-10-07T08:54 ~/data
 ```
 
 * `-w` four-letter wavelength in nanometers e.g. 0630
@@ -68,17 +67,17 @@ As an alternative in general, it's more convenient to have a single HDF5 file fo
 Convert a bunch of FITS files to HDF5 like:
 
 ```sh
-python ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07.nc
+python dascutils/ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07.nc
 ```
 
 * `-t` start stop times to convert
 
 ### Make movies from DASC raw data files
 
-Plots all wavelengths in subplots for files in a directory, for example:
+Play movie of all wavelengths in subplots for files in a directory, for example:
 
 ```sh
-python PlotDASC.py tests/ -a cal/PKR_DASC_20110112
+python dascutils/PlayMovie.py dascutils/tests/ -a cal/PKR_DASC_20110112
 ```
 
 additional options include:

@@ -2,6 +2,7 @@
 from pathlib import Path
 import xarray
 import pytest
+from pytest import approx
 from datetime import datetime
 
 #
@@ -13,8 +14,7 @@ azelstem = R.parent / "cal/PKR_DASC_20110112"
 
 
 def test_nonexistent_file(tmp_path):
-    with pytest.raises(FileNotFoundError):
-        du.load(tmp_path)
+    assert du.load(tmp_path) is None
 
 
 @pytest.mark.parametrize(
@@ -33,8 +33,8 @@ def test_basic_load(wavelength, L, t):
     assert data.shape == (L, 512, 512)
 
     assert "az" not in dset.data_vars
-    assert dset.lat == 65.126
-    assert dset.lon == -147.479
+    assert dset.lat == approx(65.126)
+    assert dset.lon == approx(-147.479)
 
     assert data.time.values[0].astype("datetime64[us]").astype(datetime) == t
 

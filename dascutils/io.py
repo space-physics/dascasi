@@ -24,13 +24,19 @@ log = logging.getLogger("DASCutils-io")
 
 
 def load(
-    fin: Path, azelfn: Path = None, treq: np.ndarray = None, wavelenreq: typing.Sequence[str] = None, verbose: bool = False
+    fin: Path, azelfn: Path = None, treq: typing.Sequence[datetime] = None, wavelenreq: typing.Sequence[str] = None
 ) -> xarray.Dataset:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
     """
-    flist = _slicereq(fin, treq, wavelenreq, verbose)
+    fin = Path(fin).expanduser()
+    if fin.is_file() and fin.suffix == ".nc":
+        return load_nc(fin, treq, wavelenreq)
+
+    flist = _slicereq(fin, treq, wavelenreq)
+    if not flist:
+        return None
 
     time = []
     img: np.ndarray = []
@@ -54,16 +60,13 @@ def load(
     time = np.array(time).astype("datetime64[us]")  # necessary for netcdf4 write
     wavelen = np.array(wavelen)
 
-    data: xarray.Dataset = None
+    data = xarray.Dataset()
     for w in np.unique(wavelen):
         d = xarray.Dataset({w: (("time", "y", "x"), img[wavelen == w, ...])}, coords={"time": time[wavelen == w]})
         # 'y': range(img.shape[1]),
         # 'x': range(img.shape[2])})
 
-        if data is None:
-            data = d
-        else:
-            data = xarray.merge((data, d), join="outer")
+        data = xarray.merge((data, d), join="outer")
     # %% metadata
     data.attrs["filename"] = " ".join((p.name for p in flist))
     # %% camera location
@@ -72,6 +75,12 @@ def load(
     data = _azel(azelfn, data)
 
     return data
+
+
+def load_nc(filename: Path, treq: typing.Sequence[datetime] = None, wavelenreq: typing.Sequence[str] = None) -> xarray.Dataset:
+    imgs = xarray.load_dataset(filename)
+
+    return imgs
 
 
 def _loadimg(fn: Path) -> typing.Tuple[np.ndarray, datetime, str]:
@@ -99,85 +108,63 @@ def _loadimg(fn: Path) -> typing.Tuple[np.ndarray, datetime, str]:
     return im, time, getwavelength(fn)
 
 
-def _slicereq(fin: Path, treq: np.ndarray, wavelenreq: typing.Sequence[str] = None, verbose: bool = False) -> typing.List[Path]:
+def _slicereq(fin: Path, treq: typing.Sequence[datetime], wavelenreq: typing.Sequence[str] = None) -> typing.List[Path]:
 
-    forig = fin
+    if fin.is_dir():
+        flist = list(fin.glob("*.FITS"))
+        if os.name != "nt":
+            flist += list(fin.glob("*.fits"))
+    else:
+        flist = [fin]
 
-    if isinstance(fin, (str, Path)):
-        fin = Path(fin).expanduser()
+    # we may filter by time, so put in time order
+    flist = sorted(flist)
 
-    if isinstance(fin, Path):
-        if fin.is_dir():
-            flist = list(fin.glob("*.FITS"))
-            if os.name != "nt":
-                flist += list(fin.glob("*.fits"))
-            flist = sorted(flist)
-        elif fin.is_file():
-            flist = [fin]
-        else:
-            raise FileNotFoundError(forig)
+    if treq is None and wavelenreq is None:
+        return flist
     # %% prefiltering files by user request for time or wavelength
-    if treq is not None or wavelenreq is not None:
-        time = []
-        wavelen: np.ndarray = []
-        flist1 = []
-        for fn in flist:
-            try:
-                time.append(gettime(fn))
-                wavelen.append(getwavelength(fn))
+    time = []
+    wavelen = []
+    flist1 = []
+    for fn in flist:
+        try:
+            time.append(gettime(fn))
+            wavelen.append(getwavelength(fn))
+            flist1.append(fn)
+        except OSError:
+            # there are many corrupted files
+            pass
 
-                flist1.append(fn)
-            except OSError:  # many corrupted files, accounted for by preallocated vectors
-                pass
-
-        time = np.atleast_1d(time)
-        flist = np.atleast_1d(flist1)
-
-        if len(wavelen) > 0:
-            wavelen = np.atleast_1d(wavelen)
-        else:  # old DASC files
-            wavelen = None
+    flist = flist1
     # %% time request
-    if treq is not None:
-        if isinstance(treq, str):
-            treq = parse(treq)
-        elif isinstance(treq, (np.ndarray, tuple, list)):
-            if isinstance(treq[0], str):
-                treq = list(map(parse, treq))  # must have list()
-            elif isinstance(treq[0], datetime):
-                pass
-            else:
-                raise TypeError(f"not sure what time request you are making with {type(treq[0])}")
-
-        treq = np.atleast_1d(treq)
-        # %% time slice
-        if treq.size == 1:  # single frame
-            i = abs(time - treq).argmin()  # nearest time, index number of file in flist
-        elif treq.size == 2:  # frames within bounds
-            i = (time >= treq[0]) & (time <= treq[1])  # boolean indexing
-
-        if isinstance(i, np.ndarray) and not i.any():
-            raise ValueError(f"no valid data found in {treq}")
-
-        flist = np.atleast_1d(flist[i])
-        wavelen = np.atleast_1d(wavelen[i])
-        if len(flist) == 0:
-            raise FileNotFoundError(f"no files found within time limits {treq}")
+    i = get_time_slice(time, treq)
+    flist = flist[i]
+    wavelen = wavelen[i]
     # %% wavelength slice
-    if wavelenreq is not None and wavelen[0] != "unknown":
+    if wavelenreq is not None:
         i = np.isin(wavelen, wavelenreq)
-        flist = np.atleast_1d(flist[i])
-
-        if len(flist) == 0:
-            raise FileNotFoundError(f"no files found with wavelength(s) {wavelenreq}")
-    # %% iterate over image files
-    if len(flist) == 0:
-        raise FileNotFoundError(f"no DASC FITS files found in {forig}")
-
-    if verbose:
-        print("Number of files", len(flist), "with wavelengths", np.unique(wavelen))
+        flist = np.asarray(flist)[i].tolist()
 
     return flist
+
+
+def get_time_slice(time: typing.Sequence[datetime], treq: typing.Sequence[datetime]) -> slice:
+    if treq is None:
+        return slice(None)
+    if isinstance(treq, str):
+        treq = [parse(treq)]
+    if isinstance(treq[0], str):
+        treq = [parse(treq[0]), parse(treq[1])]
+
+    # %% time slice
+    time = np.atleast_1d(time)
+    if len(treq) == 1:  # single frame
+        j = abs(time - treq[0]).argmin()
+        i = slice(j, j+1)  # ensures indexed lists remain list
+    elif len(treq) == 2:  # frames within bounds
+        i = slice(abs(time - treq[0]).argmin(), abs(time - treq[1]).argmin()+1)
+
+    return i
 
 
 def _camloc(fn: Path, data: xarray.Dataset) -> xarray.Dataset:
