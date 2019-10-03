@@ -20,7 +20,7 @@ The raw data FITS are one image per file.
 Most people will find it useful to have the example scripts and the tests built into the Git repo.
 
 ```sh
-git clone https://github.com/space-physics/dascutils/actions
+git clone https://github.com/space-physics/dascutils
 
 pip install -e dascutils
 ```
