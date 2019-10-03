@@ -14,29 +14,38 @@ from datetime import datetime
 from dateutil.parser import parse
 import xarray
 import typing
+import pymap3d as pm
+import h5py
+
+from .projection import interpolateCoordinate, interpSpeedUp
 
 try:
     from skimage.transform import downscale_local_mean
 except ImportError:
     downscale_local_mean = None
 
+
 log = logging.getLogger("DASCutils-io")
 
 
 def load(
-    fin: Path, azelfn: Path = None, treq: typing.Sequence[datetime] = None, wavelenreq: typing.Sequence[str] = None
-) -> xarray.Dataset:
+    fin: Path,
+    azelfn: Path = None,
+    treq: typing.Sequence[datetime] = None,
+    wavelenreq: typing.Sequence[str] = None,
+    wavelength_altitude_km: typing.Dict[str, float] = None,
+) -> typing.Dict[str, typing.Any]:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
     """
     fin = Path(fin).expanduser()
-    if fin.is_file() and fin.suffix == ".nc":
-        return load_nc(fin, treq, wavelenreq)
+    if fin.is_file() and fin.suffix in (".h5", ".hdf5"):
+        return load_hdf5(fin, treq, wavelenreq)
 
     flist = _slicereq(fin, treq, wavelenreq)
     if not flist:
-        return None
+        return {}
 
     time = []
     img: np.ndarray = []
@@ -59,26 +68,43 @@ def load(
     img = np.array(img)
     time = np.array(time).astype("datetime64[us]")  # necessary for netcdf4 write
     wavelen = np.array(wavelen)
+    flist = np.asarray(flist)  # for boolean indexing
 
-    data = xarray.Dataset()
-    for w in np.unique(wavelen):
-        d = xarray.Dataset({w: (("time", "y", "x"), img[wavelen == w, ...])}, coords={"time": time[wavelen == w]})
-        # 'y': range(img.shape[1]),
-        # 'x': range(img.shape[2])})
-
-        data = xarray.merge((data, d), join="outer")
-    # %% metadata
-    data.attrs["filename"] = " ".join((p.name for p in flist))
+    imgs = {"wavelengths": np.unique(wavelen)}
+    for w in imgs["wavelengths"]:
+        i = wavelen == w
+        imgs[w] = xarray.DataArray(
+            data=img[i, ...],
+            name=w,
+            coords={"time": time[i], "y": range(img.shape[1]), "x": range(img.shape[2])},
+            dims=["time", "y", "x"],
+        )
+        imgs[w].attrs["filename"] = [p.name for p in flist[i]]
     # %% camera location
-    data = _camloc(flist[0], data)
+    imgs = _camloc(flist[0], imgs)
     # %% az / el
-    data = _azel(azelfn, data)
+    imgs = _azel(azelfn, imgs)
 
-    return data
+    if wavelength_altitude_km is None:
+        return imgs
+    # %% projections
+    eli = interpolateCoordinate(imgs["el"], method="nearest")
+    azi = interpolateCoordinate(imgs["az"], method="nearest")
 
+    for wl, mapalt_km in wavelength_altitude_km.items():
+        if wl not in imgs:
+            continue
+        lat, lon, alt = pm.aer2geodetic(
+            azi, eli, mapalt_km * 1e3 / np.sin(np.radians(eli)), imgs["lat0"], imgs["lon0"], imgs["alt0"]
+        )
 
-def load_nc(filename: Path, treq: typing.Sequence[datetime] = None, wavelenreq: typing.Sequence[str] = None) -> xarray.Dataset:
-    imgs = xarray.load_dataset(filename)
+        mapped_lon, mapped_lat, mapped_img = interpSpeedUp(x_in=lon, y_in=lat, image=imgs[wl].values)
+        imgs[wl].data = mapped_img
+
+        # lat, lon cannot be dimensions here because they're each dynamic in 2-D
+        imgs[wl].coords["lat"] = (("y", "x"), mapped_lat)
+        imgs[wl].coords["lon"] = (("y", "x"), mapped_lon)
+        imgs[wl].attrs["mapping_alt_km"] = mapalt_km
 
     return imgs
 
@@ -160,41 +186,34 @@ def get_time_slice(time: typing.Sequence[datetime], treq: typing.Sequence[dateti
     time = np.atleast_1d(time)
     if len(treq) == 1:  # single frame
         j = abs(time - treq[0]).argmin()
-        i = slice(j, j+1)  # ensures indexed lists remain list
+        i = slice(j, j + 1)  # ensures indexed lists remain list
     elif len(treq) == 2:  # frames within bounds
-        i = slice(abs(time - treq[0]).argmin(), abs(time - treq[1]).argmin()+1)
+        i = slice(abs(time - treq[0]).argmin(), abs(time - treq[1]).argmin() + 1)
 
     return i
 
 
-def _camloc(fn: Path, data: xarray.Dataset) -> xarray.Dataset:
+def _camloc(fn: Path, data: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
     """
     Camera altitude is not specified in the DASC files.
     This can be mitigated in the end user program with a WGS-84 height above
     ellipsoid lookup.
     """
-    data.attrs["alt_m"] = np.nan
+    data["alt0"] = 0.0
 
-    lla = getcoords(fn)
-
-    if lla is not None:
-        data.attrs["lat"] = lla["lat"]
-        data.attrs["lon"] = lla["lon"]
-    else:
-        data.attrs["lat"] = np.nan
-        data.attrs["lon"] = np.nan
+    data.update(getcoords(fn))
 
     return data
 
 
-def _azel(azelfn: Path, data: xarray.Dataset) -> xarray.Dataset:
+def _azel(azelfn: Path, data: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
 
     if not azelfn:
         return data
 
     azel = loadcal(azelfn)
 
-    wavelen = list(data.data_vars)
+    wavelen = data["wavelengths"]
 
     imgshape = data[wavelen[0]].shape[1:]
 
@@ -209,21 +228,18 @@ def _azel(azelfn: Path, data: xarray.Dataset) -> xarray.Dataset:
 
         if len(wavelen) == 1 and wavelen[0] == "unknown":
             if downscale != 1:
-                data["unknown"] = (("time", "y", "x"), downscale_local_mean(data["unknown"], downscale))
-            else:
-                data["unknown"] = (("time", "y", "x"), data["unknown"])
+                data["unknown"] = downscale_local_mean(data["unknown"], downscale)
         else:
             if downscale != 1:
                 for w in np.unique(wavelen):
                     data[w] = downscale_local_mean(data[w], downscale)
 
-    data.coords["az"] = (("y", "x"), azel["az"])
-    data.coords["el"] = (("y", "x"), azel["el"])
+    data.update(azel)
 
     return data
 
 
-def loadcal(azelfn: Path) -> xarray.Dataset:
+def loadcal(azelfn: Path) -> typing.Dict[str, np.ndarray]:
     """Load DASC plate scale (degrees/pixel)"""
     if isinstance(azelfn, (str, Path)):
         azfn, elfn = stem2fn(azelfn)
@@ -252,7 +268,7 @@ def loadcal(azelfn: Path) -> xarray.Dataset:
     assert np.nanmax(el) <= 90 and np.nanmin(el) >= 0, "0 < elevation < 90 degrees."
     assert np.nanmax(az) <= 360 and np.nanmin(az) >= 0, "0 < azimuth < 360 degrees."
 
-    azel = xarray.Dataset({"el": (("y", "x"), el), "az": (("y", "x"), az)})
+    azel = {"el": el, "az": az}
 
     return azel
 
@@ -285,16 +301,14 @@ def getwavelength(fn: Path) -> str:
 def getcoords(fn: Path) -> typing.Dict[str, float]:
     """ get lat, lon from DASC header"""
 
-    latlon: typing.Dict[str, float]
-
     with fits.open(fn) as h:
         try:
-            latlon = {"lat": h[0].header["GLAT"], "lon": h[0].header["GLON"]}
+            latlon = {"lat0": h[0].header["GLAT"], "lon0": h[0].header["GLON"]}
         except KeyError:
             if fn.name[:3] == "PKR":
-                latlon = {"lat": 65.126, "lon": -147.479}
+                latlon = {"lat0": 65.126, "lon0": -147.479}
             else:
-                latlon = None
+                latlon = {"lat0": np.nan, "lon0": np.nan}
 
     return latlon
 
@@ -310,8 +324,10 @@ def stem2fn(stem: Path) -> typing.Tuple[Path, Path]:
     elif stem.is_file():
         raise OSError(f"need to specify stem, not whole filename {stem}")
 
-    azfn = stem.parent / (stem.name + "_AZ_10deg.fits")
-    elfn = stem.parent / (stem.name + "_EL_10deg.fits")
+    stemname = stem.name.rstrip("_")
+
+    azfn = stem.parent / (stemname + "_AZ_10deg.fits")
+    elfn = stem.parent / (stemname + "_EL_10deg.fits")
 
     if not azfn.is_file() or not elfn.is_file():
         raise FileNotFoundError(f"did not find {azfn} \n {elfn}")
@@ -319,10 +335,54 @@ def stem2fn(stem: Path) -> typing.Tuple[Path, Path]:
     return azfn, elfn
 
 
-def save_hdf5(imgs: np.ndarray, outfile: Path):
-    # for NetCDF compression. too high slows down with little space savings.
-    ENC = {"zlib": True, "complevel": 1, "fletcher32": True}
-
+def save_hdf5(imgs: typing.Dict[str, typing.Any], outfile: Path):
     print("writing image stack to", outfile)
-    enc = {k: ENC for k in imgs.data_vars}
-    imgs.to_netcdf(outfile, "w", encoding=enc)
+
+    with h5py.File(outfile, "w") as h:
+        h["wavelengths"] = imgs["wavelengths"].astype(np.string_)
+        for p in ["alt0", "lat0", "lon0", "az", "el"]:
+            if p in imgs:
+                h[f"/camera/{p}"] = imgs[p]
+        for wl in imgs["wavelengths"]:
+            h.create_dataset(
+                f"/{wl}/imgs",
+                data=imgs[wl],
+                compression="gzip",
+                compression_opts=1,
+                chunks=(1, *imgs[wl].shape[1:]),
+                shuffle=True,
+                fletcher32=True,
+            )
+            h[f"/{wl}/time"] = imgs[wl].time.values.astype(np.string_)
+            if "lat" in imgs[wl].coords:
+                h[f"/{wl}/lat"] = imgs[wl].lat
+                h[f"/{wl}/lon"] = imgs[wl].lon
+
+
+def load_hdf5(
+    filename: Path, treq: typing.Sequence[datetime] = None, wavelenreq: typing.Sequence[str] = None
+) -> typing.Dict[str, typing.Any]:
+
+    imgs = {}
+
+    with h5py.File(filename, "r") as h:
+        for p in ["alt0", "lat0", "lon0"]:
+            imgs[p] = h[f"camera/{p}"][()]
+        if "az" in h:
+            imgs["az"] = h["camera/az"][:]
+            imgs["el"] = h["camera/el"][:]
+
+        wavelen = h["wavelengths"][:].astype(str) if wavelenreq is None else wavelenreq
+        imgs["wavelengths"] = wavelen
+
+        for wl in wavelen:
+            time = np.asarray(h[f"/{wl}/time"]).astype("datetime64[us]")
+            i = get_time_slice(time, treq)
+            imgs[wl] = xarray.DataArray(
+                data=h[f"/{wl}/imgs"][i, ...],
+                name=wl,
+                coords={"time": time[i], "y": range(h[f"/{wl}/imgs"].shape[1]), "x": range(h[f"/{wl}/imgs"].shape[2])},
+                dims=["time", "y", "x"],
+            )
+
+    return imgs

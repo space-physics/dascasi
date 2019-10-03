@@ -6,18 +6,25 @@ from pytest import approx
 
 R = Path(__file__).parent
 azelstem = R.parent / "cal/PKR_DASC_20110112"
+mapping_altitude_km = {"0428": 110.0, "0558": 150.0, "0630": 200.0}
 
 
-def test_projection():
-    dp = pytest.importorskip("dascutils.projection")
+@pytest.mark.parametrize(
+    "wavelen,refalt,reflat,reflon",
+    [
+        ("0428", 110.0, 65.34932617, -147.92703665),
+        ("0558", 150.0, 65.42698381, -148.0819881),
+        ("0630", 200.0, 65.52119085, -148.29018938),
+    ],
+)
+def test_projection(wavelen, refalt, reflat, reflon):
 
-    data = du.load(R, azelstem)
+    data = du.load(R, azelstem, wavelenreq=wavelen, wavelength_altitude_km=mapping_altitude_km)
 
-    data = dp.project_altitude(data, 100.0)
+    assert data[wavelen].mapping_alt_km == approx(refalt)
 
-    assert data.mapping_alt_km == approx(100.0)
-    assert data.mapping_lat[266, 247] == approx(65.12351)
-    assert data.mapping_lon[266, 247] == approx(-147.48196)
+    assert data[wavelen].lat[266, 247] == approx(reflat)
+    assert data[wavelen].lon[266, 247] == approx(reflon)
 
 
 if __name__ == "__main__":

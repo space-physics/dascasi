@@ -2,6 +2,7 @@
 from pathlib import Path
 import xarray
 import pytest
+import numpy as np
 from pytest import approx
 from datetime import datetime
 
@@ -14,7 +15,9 @@ azelstem = R.parent / "cal/PKR_DASC_20110112"
 
 
 def test_nonexistent_file(tmp_path):
-    assert du.load(tmp_path) is None
+    x = du.load(tmp_path)
+    assert isinstance(x, dict)
+    assert not x
 
 
 @pytest.mark.parametrize(
@@ -26,15 +29,14 @@ def test_nonexistent_file(tmp_path):
     ],
 )
 def test_basic_load(wavelength, L, t):
-    dset = du.load(R)
-    assert isinstance(dset, xarray.Dataset)
+    imgs = du.load(R)
+    assert isinstance(imgs, dict)
+    assert isinstance(imgs[wavelength], xarray.DataArray)
 
-    data = dset[wavelength].dropna(dim="time")
+    data = imgs[wavelength]
     assert data.shape == (L, 512, 512)
-
-    assert "az" not in dset.data_vars
-    assert dset.lat == approx(65.126)
-    assert dset.lon == approx(-147.479)
+    assert imgs["lat0"] == approx(65.126)
+    assert imgs["lon0"] == approx(-147.479)
 
     assert data.time.values[0].astype("datetime64[us]").astype(datetime) == t
 
@@ -42,15 +44,17 @@ def test_basic_load(wavelength, L, t):
 def test_timerange_and_wavelength():
     data = du.load(R, azelstem, treq=("2012-01-03T08:32:02", "2016-01-04"), wavelenreq="0558")
     assert data["0558"].shape == (2, 512, 512)
+    assert "0428" not in data
+    assert "0630" not in data
 
 
 @pytest.mark.parametrize("wavelength, L", [("0558", 1)])
 def test_singletime(wavelength, L):
-    data = du.load(R, azelstem, "2012-01-03T08:32:02")
+    data = du.load(R, azelstem, treq="2012-01-03T08:32:02")
     assert data[wavelength].shape == (L, 512, 512)
-    assert data.az.shape == (512, 512)
-    assert data.el.shape == (512, 512)
-    assert data.time.values.astype("datetime64[us]").astype(datetime) == datetime(2015, 10, 7, 8, 23, 51, 743000)
+    assert data["az"].shape == (512, 512)
+    assert data["el"].shape == (512, 512)
+    assert data[wavelength].time.values.astype("datetime64[us]").astype(datetime) == datetime(2015, 10, 7, 8, 23, 51, 743000)
 
 
 @pytest.mark.parametrize("wavelength, L", [("0428", 1), ("0558", 2), ("0630", 1)])
@@ -60,17 +64,21 @@ def test_full_load(wavelength, L):
     assert data[wavelength].shape == (L, 512, 512)
 
 
-def test_write_hdf5(tmp_path):
-    pytest.importorskip("netCDF4")
-
-    outfn = tmp_path / "test.nc"
+def test_read_write_hdf5(tmp_path):
+    outfn = tmp_path / "test.h5"
 
     ref = du.load(R, azelstem)
     du.save_hdf5(ref, outfn)
 
-    dat = xarray.open_dataset(outfn)
+    dat = du.load(outfn)
 
-    assert dat.equals(ref)
+    for k, v in dat.items():
+        if isinstance(v, np.ndarray):
+            assert (v == ref[k]).all()
+        elif isinstance(v, xarray.DataArray):
+            assert v.equals(ref[k])
+        else:
+            assert v == ref[k]
 
 
 if __name__ == "__main__":

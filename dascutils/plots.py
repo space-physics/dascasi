@@ -1,6 +1,6 @@
 from pathlib import Path
-import xarray
 import numpy as np
+import typing
 from datetime import timedelta, datetime
 from matplotlib.pyplot import draw, pause, figure
 from matplotlib.colors import LogNorm
@@ -12,59 +12,46 @@ except ImportError:
     themisplot = None
 
 
-def histogram_dasc(imgs: xarray.Dataset, odir=None):
+def histogram_dasc(imgs: typing.Dict[str, typing.Any], outdir=None):
     """
     creates per wavelength histograms
     the entries in list img correspond to wavelength, a 1-D array
     """
-    if odir is not None:
-        odir = Path(odir).expanduser()
 
     fg = figure(figsize=(15, 5))
     axs = fg.subplots(1, 3)
-    for a, i in zip(axs, imgs.data_vars):
-        a.hist(imgs[i].dropna(dim="time", how="all").values.ravel(), bins=128)
+    for a, i in zip(axs, imgs["wavelengths"]):
+        a.hist(imgs[i].values.ravel(), bins=128)
         a.set_yscale("log")
         a.set_title(r"$\lambda=" + f"{i}$ nm")
         a.set_xlabel("14-bit data numbers")
 
-    if odir:
-        ofn = odir / "DASChistogram.png"
+    if outdir:
+        outdir = Path(outdir).expanduser()
+        ofn = outdir / "DASChistogram.png"
         print("writing", ofn, end="\r")
         fg.savefig(ofn, bbox_inches="tight")
 
 
-def moviedasc(imgs: xarray.Dataset, odir: Path, cadence: float, rows=None, cols=None):
+def moviedasc(imgs: typing.Dict[str, typing.Any], outdir: Path, cadence: float, rows=None, cols=None):
 
-    if odir:
-        print("writing to", odir)
-        odir = Path(odir).expanduser()
-
-    wavelen = list(imgs.data_vars)
+    wavlen = imgs["wavelengths"]
 
     fg = figure(figsize=(15, 5))
 
-    axs = np.atleast_1d(fg.subplots(1, len(np.unique(wavelen))))
+    axs = np.atleast_1d(fg.subplots(1, len(wavlen)))
 
-    if imgs.time.dtype == "M8[ns]":
-        time = [datetime.utcfromtimestamp(t / 1e9) for t in imgs.time.values.astype(int)]
-    else:
-        time = imgs.time.values.astype(datetime)
     # %% setup figures
-    if "unknown" not in imgs.data_vars:
+    if "unknown" not in wavlen:
         Hi = []
         Ht = []
-        for ax, w, mm, c in zip(axs, np.unique(wavelen), ((350, 800), (350, 9000), (350, 900)), ("b", "g", "r")):
+        for ax, w, mm, c in zip(axs, wavlen, ((350, 800), (350, 9000), (350, 900)), ("b", "g", "r")):
             # ax.axis('off') #this also removes xlabel,ylabel
             ax.set_xticks([])
             ax.set_yticks([])
             ax.set_xlabel(f"{w} nm", color=c)
 
-            Hi.append(
-                ax.imshow(
-                    imgs[w].dropna(dim="time", how="all")[0], vmin=mm[0], vmax=mm[1], origin="lower", norm=LogNorm(), cmap="gray"
-                )
-            )
+            Hi.append(ax.imshow(imgs[w][0], vmin=mm[0], vmax=mm[1], origin="lower", norm=LogNorm(), cmap="gray"))
 
             Ht.append(ax.set_title("", color=c))
             # fg.colorbar(hi[-1],ax=a).set_label('14-bit data numbers')
@@ -82,30 +69,33 @@ def moviedasc(imgs: xarray.Dataset, odir: Path, cadence: float, rows=None, cols=
         if themisplot is not None:
             themisplot.overlayrowcol(ax, rows, cols)
     # %% loop
-    print("generating video until", time[-1])
-    t = time[0]
+    t = min([imgs[wl]["time"][0] for wl in wavlen]).values.astype("datetime64[us]").astype(datetime)
+    t1 = max([imgs[wl]["time"][-1] for wl in wavlen]).values.astype("datetime64[us]").astype(datetime)
     dt = timedelta(seconds=cadence)
-    while t <= time[-1]:
-        if "unknown" not in imgs.data_vars:
-            for w, hi, ht in zip(np.unique(wavelen), Hi, Ht):
-                im = imgs[w].dropna(dim="time", how="all").sel(time=t, method="nearest")
-                hi.set_data(im)
-                try:
-                    ht.set_text(str(im.time.values))
-                except OSError:  # file had corrupted time
-                    ht.set_text("")
+
+    def _update_panel(hi, ht):
+        hi.set_data(im)
+        try:
+            ht.set_text(str(im.time.values))
+        except OSError:  # file had corrupted time
+            ht.set_text("")
+
+    while t <= t1:
+        if "unknown" not in wavlen:
+            for w, hi, ht in zip(wavlen, Hi, Ht):
+                im = imgs[w].sel(time=t, method="nearest")
+                _update_panel(hi, ht)
         else:
             im = imgs["unknown"].sel(time=t, method="nearest")
-            hi.set_data(im)
-            try:
-                ht.set_text(str(im.time.values))
-            except OSError:  # file had corrupted time
-                ht.set_text("")
+            _update_panel(hi, ht)
 
         draw(), pause(0.05)  # the pause avoids random crashes
-        t += dt
 
-        if odir:
-            ofn = odir / (str(t) + ".png")
+        if outdir:
+            outdir = Path(outdir).expanduser()
+            print("writing to", outdir)
+            ofn = outdir / (str(t) + ".png")
             print("saving", ofn, end="\r")
             fg.savefig(ofn, bbox_inches="tight", facecolor="k")
+
+        t += dt
