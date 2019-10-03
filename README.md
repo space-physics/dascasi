@@ -77,7 +77,7 @@ python dascutils/ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07
 Play movie of all wavelengths in subplots for files in a directory, for example:
 
 ```sh
-python dascutils/PlayMovie.py dascutils/tests/ -a cal/PKR_DASC_20110112
+python dascutils/PlayMovie.py dascutils/tests/
 ```
 
 additional options include:
@@ -92,7 +92,7 @@ The `cal/` directory contains `AZ` and `EL` files corresponding to each pixel.
 ```python
 import dascutils as du
 
-data = du.load('tests/PKR_DASC_0558_20151007_082351.743.FITS', azelfn='cal/PKR_DASC_20110112')
+data = du.load('tests/', azelfn='cal/PKR_DASC_20110112')
 ```
 
 now `data` includes data variables `az` and `el`, same shape as the image(s), along with camera position in `lat` `lon` `alt_m`.
