@@ -66,7 +66,7 @@ def load(
 
     # %% collect output
     img = np.array(img)
-    time = np.array(time).astype("datetime64[us]")  # necessary for netcdf4 write
+    time = np.array(time)
     wavelen = np.array(wavelen)
     flist = np.asarray(flist)  # for boolean indexing
 
