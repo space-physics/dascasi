@@ -68,7 +68,7 @@ As an alternative in general, it's more convenient to have a single HDF5 file fo
 Convert a bunch of FITS files to HDF5 like:
 
 ```sh
-python ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07
+python ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07.nc
 ```
 
 * `-t` start stop times to convert
