@@ -13,7 +13,9 @@ This program handles the corrupted FITS files due to the RAID array failure on 2
 The raw data FITS contain one image per file.
 
 
+![DASC projected images](./tests/dasc_projection_plot.png)
 
+(plot above created with PlotProjectedImage.py)
 
 ## Install
 
