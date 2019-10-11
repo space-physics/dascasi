@@ -9,10 +9,10 @@
 # DASC all-sky camera utilities
 
 Utilities for plotting, saving, analyzing the Poker Flat Research Range Digital All Sky Camera. (Other locations, too).
-
 This program handles the corrupted FITS files due to the RAID array failure on 2013 data.
+The raw data FITS contain one image per file.
 
-The raw data FITS are one image per file.
+
 
 
 ## Install
@@ -26,13 +26,18 @@ pip install -e dascutils
 ```
 
 ## Usage
-Many analysts may use the API directly, like:
+
+To use the API directly, like:
+
 ```python
 import dascutils as du
 
 data = du.load('tests/PKR_DASC_0558_20151007_082351.743.FITS')
 ```
-This returns a dictionary of [xarray.DataArray](http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html), which is like a "smart" Numpy array.
+
+This returns a dictionary of
+[xarray.DataArray](http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html),
+which is like a "smart" Numpy array.
 The images are index by wavelength if it was specified in the data file, or 'unknown' otherwise.
 The images are in a 3-D stack: (time, x, y).
 `data.time` is the time of each image.
@@ -107,6 +112,6 @@ Each wavelength has a distinctive peak emission altitude due to the energies, ki
 
 It takes considerable time to stretch the image stack pixels to fit a project geographic grid, so this is not enabled by default.
 It will be enabled if the du.load(..., wavelength_altitude_km=) parameter is used.
-See PlotDASCPixels.py for an example.
+See PlotProjectedImage.py for an example.
 
 Some analyses can be done far more rapidly by just projecting pixel(s) of interest rather than an entire 3-D image stack.

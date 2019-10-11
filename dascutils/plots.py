@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import typing
 from datetime import timedelta, datetime
+import xarray
 from matplotlib.pyplot import draw, pause, figure
 from matplotlib.colors import LogNorm
 
@@ -10,6 +11,28 @@ try:
     import themisasi.plots as themisplot
 except ImportError:
     themisplot = None
+
+
+def plot_projected_image(imgs: xarray.DataArray):
+    """
+    plots a projected image at an altitude (lat, lon)
+
+    https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html#sequential
+    """
+    if not isinstance(imgs, xarray.DataArray):
+        raise TypeError('Please pass in one image wavelength at a time')
+
+    cmap = {'0428': 'Blues', '0558': 'Greens', '0630': 'Reds'}
+
+    for img in imgs:
+        fg = figure()
+        ax = fg.gca()
+        ax.pcolormesh(imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, 'Grays'))
+        ax.set_title(f'{str(img.time.values)[:-10]}: {imgs.name} '
+                     r'$\AA$'
+                     f'at {imgs.mapping_alt_km} km altitude')
+        ax.set_xlabel('geographic longitude')
+        ax.set_ylabel('geographic latitude')
 
 
 def histogram_dasc(imgs: typing.Dict[str, typing.Any], outdir=None):
@@ -73,21 +96,14 @@ def moviedasc(imgs: typing.Dict[str, typing.Any], outdir: Path, cadence: float, 
     t1 = max([imgs[wl]["time"][-1] for wl in wavlen]).values.astype("datetime64[us]").astype(datetime)
     dt = timedelta(seconds=cadence)
 
-    def _update_panel(hi, ht):
-        hi.set_data(im)
-        try:
-            ht.set_text(str(im.time.values))
-        except OSError:  # file had corrupted time
-            ht.set_text("")
-
     while t <= t1:
         if "unknown" not in wavlen:
             for w, hi, ht in zip(wavlen, Hi, Ht):
                 im = imgs[w].sel(time=t, method="nearest")
-                _update_panel(hi, ht)
+                _update_panel(im, hi, ht)
         else:
             im = imgs["unknown"].sel(time=t, method="nearest")
-            _update_panel(hi, ht)
+            _update_panel(im, hi, ht)
 
         draw(), pause(0.05)  # the pause avoids random crashes
 
@@ -99,3 +115,15 @@ def moviedasc(imgs: typing.Dict[str, typing.Any], outdir: Path, cadence: float, 
             fg.savefig(ofn, bbox_inches="tight", facecolor="k")
 
         t += dt
+
+
+def _update_panel(im, hi, ht):
+    try:
+        hi.set_data(im)
+    except AttributeError:
+        hi.set_array(im.values.ravel())
+
+    try:
+        ht.set_text(str(im.time.values))
+    except OSError:  # file had corrupted time
+        ht.set_text("")
