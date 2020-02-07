@@ -1,17 +1,14 @@
-[![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
+# DASC all-sky camera utilities
 
-[![Actions Status](https://github.com/space-physics/dascutils/workflows/ci_python/badge.svg)](https://github.com/space-physics/dascutils/actions)
+[![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
+![ci_python](https://github.com/space-physics/dascutils/workflows/ci_python/badge.svg)
 
 [![PyPi versions](https://img.shields.io/pypi/pyversions/dascutils.svg)](https://pypi.python.org/pypi/dascutils)
 [![PyPi Download stats](http://pepy.tech/badge/dascutils)](http://pepy.tech/project/dascutils)
 
-
-# DASC all-sky camera utilities
-
 Utilities for plotting, saving, analyzing the Poker Flat Research Range Digital All Sky Camera. (Other locations, too).
 This program handles the corrupted FITS files due to the RAID array failure on 2013 data.
 The raw data FITS contain one image per file.
-
 
 ![DASC projected images](./tests/dasc_projection_plot.png)
 
