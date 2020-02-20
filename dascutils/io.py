@@ -13,7 +13,7 @@ import numpy as np
 from datetime import datetime
 from dateutil.parser import parse
 import xarray
-import typing
+import typing as T
 import pymap3d as pm
 
 from .projection import interpolateCoordinate, interpSpeedUp
@@ -32,10 +32,10 @@ log = logging.getLogger("DASCutils-io")
 def load(
     fin: Path,
     azelfn: Path = None,
-    treq: typing.Sequence[datetime] = None,
-    wavelenreq: typing.Sequence[str] = None,
-    wavelength_altitude_km: typing.Dict[str, float] = None,
-) -> typing.Dict[str, typing.Any]:
+    treq: T.Sequence[datetime] = None,
+    wavelenreq: T.Sequence[str] = None,
+    wavelength_altitude_km: T.Dict[str, float] = None,
+) -> T.Dict[str, T.Any]:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
@@ -49,6 +49,7 @@ def load(
         return {}
 
     time = []
+    files = []  # to only keep filesnames for "good" files
     img: np.ndarray = []
     wavelen: np.ndarray = []
 
@@ -60,35 +61,30 @@ def load(
             log.warning(f"{fn} has error {e}")
             continue
 
+        files.append(fn)
         img.append(im)
         time.append(t)
         wavelen.append(w)
     warnings.resetwarnings()
 
     # %% collect output
-    img = np.array(img)
-    time = np.array(time)
-    wavelen = np.array(wavelen)
-    flist = np.asarray(flist)  # for boolean indexing
-
-    imgs = {"wavelengths": np.unique(wavelen)}
-    for w in imgs["wavelengths"]:
-        i = wavelen == w
-        imgs[w] = xarray.DataArray(
-            data=img[i, ...],
-            name=w,
-            coords={"time": time[i], "y": range(img.shape[1]), "x": range(img.shape[2])},
-            dims=["time", "y", "x"],
-        )
-        imgs[w].attrs["filename"] = [p.name for p in flist[i]]
+    imgs = _collect(files, img, time, wavelen)
     # %% camera location
-    imgs = _camloc(flist[0], imgs)
+    imgs = _camloc(files[0], imgs)
     # %% az / el
     imgs = _azel(azelfn, imgs)
+    # %% projections
+    imgs = _project(imgs, wavelength_altitude_km)
+
+    return imgs
+
+
+def _project(imgs: T.Dict[str, xarray.DataArray], wavelength_altitude_km: T.Dict[str, float]) -> T.Dict[str, xarray.DataArray]:
+    """ project image stack to specified per-wavelength altitudes """
 
     if wavelength_altitude_km is None:
         return imgs
-    # %% projections
+
     eli = interpolateCoordinate(imgs["el"], method="nearest")
     azi = interpolateCoordinate(imgs["az"], method="nearest")
 
@@ -110,7 +106,30 @@ def load(
     return imgs
 
 
-def _loadimg(fn: Path) -> typing.Tuple[np.ndarray, datetime, str]:
+def _collect(
+    files: T.Sequence[Path], img: T.Sequence[np.ndarray], time: T.Sequence[datetime], wavelen: T.Sequence[str]
+) -> T.Dict[str, xarray.DataArray]:
+    """ assemble image stack into dict of xarray.DataArray """
+    img = np.array(img)
+    time = np.array(time)
+    wavelen = np.array(wavelen)
+    files = np.asarray(files)  # for boolean indexing
+
+    imgs = {"wavelengths": np.unique(wavelen)}
+    for w in imgs["wavelengths"]:
+        i = wavelen == w
+        imgs[w] = xarray.DataArray(
+            data=img[i, ...],
+            name=w,
+            coords={"time": time[i], "y": range(img.shape[1]), "x": range(img.shape[2])},
+            dims=["time", "y", "x"],
+        )
+        imgs[w].attrs["filename"] = [p.name for p in files[i]]
+
+    return imgs
+
+
+def _loadimg(fn: Path) -> T.Tuple[np.ndarray, datetime, str]:
     """
     DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
     just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
@@ -135,7 +154,8 @@ def _loadimg(fn: Path) -> typing.Tuple[np.ndarray, datetime, str]:
     return im, time, getwavelength(fn)
 
 
-def _slicereq(fin: Path, treq: typing.Sequence[datetime], wavelenreq: typing.Sequence[str] = None) -> typing.List[Path]:
+def _slicereq(fin: Path, treq: T.Sequence[datetime], wavelenreq: T.Sequence[str] = None) -> T.List[Path]:
+    """ given user parameters, determine slice for image stack vs. wavelength and time """
 
     if fin.is_dir():
         flist = list(fin.glob("*.FITS"))
@@ -175,7 +195,7 @@ def _slicereq(fin: Path, treq: typing.Sequence[datetime], wavelenreq: typing.Seq
     return flist
 
 
-def _camloc(fn: Path, data: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+def _camloc(fn: Path, data: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
     """
     Camera altitude is not specified in the DASC files.
     This can be mitigated in the end user program with a WGS-84 height above
@@ -188,7 +208,7 @@ def _camloc(fn: Path, data: typing.Dict[str, typing.Any]) -> typing.Dict[str, ty
     return data
 
 
-def _azel(azelfn: Path, data: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+def _azel(azelfn: Path, data: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
 
     if not azelfn:
         return data
@@ -221,7 +241,7 @@ def _azel(azelfn: Path, data: typing.Dict[str, typing.Any]) -> typing.Dict[str, 
     return data
 
 
-def loadcal(azelfn: Path) -> typing.Dict[str, np.ndarray]:
+def loadcal(azelfn: Path) -> T.Dict[str, np.ndarray]:
     """Load DASC plate scale (degrees/pixel)"""
     if isinstance(azelfn, (str, Path)):
         azfn, elfn = stem2fn(azelfn)
@@ -280,7 +300,7 @@ def getwavelength(fn: Path) -> str:
     return w
 
 
-def getcoords(fn: Path) -> typing.Dict[str, float]:
+def getcoords(fn: Path) -> T.Dict[str, float]:
     """ get lat, lon from DASC header"""
 
     with fits.open(fn) as h:
@@ -295,7 +315,7 @@ def getcoords(fn: Path) -> typing.Dict[str, float]:
     return latlon
 
 
-def stem2fn(stem: Path) -> typing.Tuple[Path, Path]:
+def stem2fn(stem: Path) -> T.Tuple[Path, Path]:
     """if user specifies the stem to Az,El, generate the az, el filenames"""
     assert isinstance(stem, (str, Path))
 

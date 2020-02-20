@@ -9,11 +9,11 @@ import dascutils as du
 import dascutils.plots as dup
 
 R = Path(__file__).parent
-data_dir = R / 'tests'
-cal_stem = R / 'cal' / 'PKR_DASC_20110112_'
+data_dir = R / "tests"
+cal_stem = R / "cal" / "PKR_DASC_20110112_"
 
 
-mapping_altitude_km = {'0428': 110.0, '0558': 150.0, '0630': 200.0, 'unknown': 150.0}
+mapping_altitude_km = {"0428": 110.0, "0558": 150.0, "0630": 200.0, "unknown": 150.0}
 
 imgs = du.load(data_dir, cal_stem, wavelength_altitude_km=mapping_altitude_km)
 

@@ -20,19 +20,17 @@ def plot_projected_image(imgs: xarray.DataArray):
     https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html#sequential
     """
     if not isinstance(imgs, xarray.DataArray):
-        raise TypeError('Please pass in one image wavelength at a time')
+        raise TypeError("Please pass in one image wavelength at a time")
 
-    cmap = {'0428': 'Blues', '0558': 'Greens', '0630': 'Reds'}
+    cmap = {"0428": "Blues", "0558": "Greens", "0630": "Reds"}
 
     for img in imgs:
         fg = figure()
         ax = fg.gca()
-        ax.pcolormesh(imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, 'Grays'))
-        ax.set_title(f'{str(img.time.values)[:-10]}: {imgs.name} '
-                     r'$\AA$'
-                     f'at {imgs.mapping_alt_km} km altitude')
-        ax.set_xlabel('geographic longitude')
-        ax.set_ylabel('geographic latitude')
+        ax.pcolormesh(imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, "Grays"))
+        ax.set_title(f"{str(img.time.values)[:-10]}: {imgs.name} " r"$\AA$" f"at {imgs.mapping_alt_km} km altitude")
+        ax.set_xlabel("geographic longitude")
+        ax.set_ylabel("geographic latitude")
 
 
 def histogram_dasc(imgs: typing.Dict[str, typing.Any], outdir=None):
