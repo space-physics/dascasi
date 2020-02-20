@@ -6,7 +6,6 @@ import numpy as np
 from pytest import approx
 from datetime import datetime
 
-#
 import dascutils as du
 
 R = Path(__file__).parent
@@ -82,4 +81,4 @@ def test_read_write_hdf5(tmp_path):
 
 
 if __name__ == "__main__":
-    pytest.main(["-x", __file__])
+    pytest.main([__file__])

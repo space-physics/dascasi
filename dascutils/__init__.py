@@ -13,4 +13,5 @@
 #    limitations under the License.
 
 from .web import download
-from .io import load, loadcal, save_hdf5
+from .io import load, loadcal
+from .hdf5 import save_hdf5

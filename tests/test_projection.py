@@ -28,4 +28,4 @@ def test_projection(wavelen, refalt, reflat, reflon):
 
 
 if __name__ == "__main__":
-    pytest.main(["-x", __file__])
+    pytest.main([__file__])

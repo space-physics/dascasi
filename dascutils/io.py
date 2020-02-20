@@ -15,9 +15,10 @@ from dateutil.parser import parse
 import xarray
 import typing
 import pymap3d as pm
-import h5py
 
 from .projection import interpolateCoordinate, interpSpeedUp
+from .hdf5 import load_hdf5
+from .utils import get_time_slice
 
 try:
     from skimage.transform import downscale_local_mean
@@ -174,25 +175,6 @@ def _slicereq(fin: Path, treq: typing.Sequence[datetime], wavelenreq: typing.Seq
     return flist
 
 
-def get_time_slice(time: typing.Sequence[datetime], treq: typing.Sequence[datetime]) -> slice:
-    if treq is None:
-        return slice(None)
-    if isinstance(treq, str):
-        treq = [parse(treq)]
-    if isinstance(treq[0], str):
-        treq = [parse(treq[0]), parse(treq[1])]
-
-    # %% time slice
-    time = np.atleast_1d(time)
-    if len(treq) == 1:  # single frame
-        j = abs(time - treq[0]).argmin()
-        i = slice(j, j + 1)  # ensures indexed lists remain list
-    elif len(treq) == 2:  # frames within bounds
-        i = slice(abs(time - treq[0]).argmin(), abs(time - treq[1]).argmin() + 1)
-
-    return i
-
-
 def _camloc(fn: Path, data: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
     """
     Camera altitude is not specified in the DASC files.
@@ -333,56 +315,3 @@ def stem2fn(stem: Path) -> typing.Tuple[Path, Path]:
         raise FileNotFoundError(f"did not find {azfn} \n {elfn}")
 
     return azfn, elfn
-
-
-def save_hdf5(imgs: typing.Dict[str, typing.Any], outfile: Path):
-    print("writing image stack to", outfile)
-
-    with h5py.File(outfile, "w") as h:
-        h["wavelengths"] = imgs["wavelengths"].astype(np.string_)
-        for p in ["alt0", "lat0", "lon0", "az", "el"]:
-            if p in imgs:
-                h[f"/camera/{p}"] = imgs[p]
-        for wl in imgs["wavelengths"]:
-            h.create_dataset(
-                f"/{wl}/imgs",
-                data=imgs[wl],
-                compression="gzip",
-                compression_opts=1,
-                chunks=(1, *imgs[wl].shape[1:]),
-                shuffle=True,
-                fletcher32=True,
-            )
-            h[f"/{wl}/time"] = imgs[wl].time.values.astype(np.string_)
-            if "lat" in imgs[wl].coords:
-                h[f"/{wl}/lat"] = imgs[wl].lat
-                h[f"/{wl}/lon"] = imgs[wl].lon
-
-
-def load_hdf5(
-    filename: Path, treq: typing.Sequence[datetime] = None, wavelenreq: typing.Sequence[str] = None
-) -> typing.Dict[str, typing.Any]:
-
-    imgs = {}
-
-    with h5py.File(filename, "r") as h:
-        for p in ["alt0", "lat0", "lon0"]:
-            imgs[p] = h[f"camera/{p}"][()]
-        if "az" in h:
-            imgs["az"] = h["camera/az"][:]
-            imgs["el"] = h["camera/el"][:]
-
-        wavelen = h["wavelengths"][:].astype(str) if wavelenreq is None else wavelenreq
-        imgs["wavelengths"] = wavelen
-
-        for wl in wavelen:
-            time = np.asarray(h[f"/{wl}/time"]).astype("datetime64[us]")
-            i = get_time_slice(time, treq)
-            imgs[wl] = xarray.DataArray(
-                data=h[f"/{wl}/imgs"][i, ...],
-                name=wl,
-                coords={"time": time[i], "y": range(h[f"/{wl}/imgs"].shape[1]), "x": range(h[f"/{wl}/imgs"].shape[2])},
-                dims=["time", "y", "x"],
-            )
-
-    return imgs

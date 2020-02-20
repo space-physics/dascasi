@@ -7,6 +7,43 @@ import xarray
 import typing
 from datetime import datetime, timedelta
 from dateutil.parser import parse
+import numpy as np
+
+
+def get_time_slice(time: typing.Sequence[datetime], treq: typing.Sequence[datetime]) -> slice:
+    """
+    given the times in a data stack and the requested time(s),
+    return a slice for indexing the data stack
+
+    Parameters
+    ----------
+    time : list of datetime
+        times in data stack
+    treq : list of datetime
+        requested time(s)
+
+    Returns
+    -------
+    i: slice
+        indices corresponding to requested time(s) in data stack
+
+    """
+    if treq is None:
+        return slice(None)
+    if isinstance(treq, str):
+        treq = [parse(treq)]
+    if isinstance(treq[0], str):
+        treq = [parse(treq[0]), parse(treq[1])]
+
+    # %% time slice
+    time = np.atleast_1d(time)
+    if len(treq) == 1:  # single frame
+        j = abs(time - treq[0]).argmin()
+        i = slice(j, j + 1)  # ensures indexed lists remain list
+    elif len(treq) == 2:  # frames within bounds
+        i = slice(abs(time - treq[0]).argmin(), abs(time - treq[1]).argmin() + 1)
+
+    return i
 
 
 def time_bounds(startend: typing.Tuple[datetime, datetime]) -> typing.Tuple[datetime, datetime]:
