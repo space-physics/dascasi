@@ -14,25 +14,35 @@ from .utils import get_time_slice
 def save_hdf5(imgs: T.Dict[str, T.Any], outfile: Path):
     print("writing image stack to", outfile)
 
-    with h5py.File(outfile, "w") as h:
-        h["wavelengths"] = imgs["wavelengths"].astype(np.string_)
+    with h5py.File(outfile, "w") as f:
+        f["wavelengths"] = imgs["wavelengths"].astype(np.string_)
         for p in ["alt0", "lat0", "lon0", "az", "el"]:
             if p in imgs:
-                h[f"/camera/{p}"] = imgs[p]
+                f[f"/camera/{p}"] = imgs[p]
         for wl in imgs["wavelengths"]:
-            h.create_dataset(
+            h = f.create_dataset(
                 f"/{wl}/imgs",
                 data=imgs[wl],
                 compression="gzip",
                 compression_opts=1,
+                # because of high entropy data,
+                # higher compression didn't significantly shrink file size
                 chunks=(1, *imgs[wl].shape[1:]),
                 shuffle=True,
                 fletcher32=True,
             )
-            h[f"/{wl}/time"] = imgs[wl].time.values.astype(np.string_)
+            # metadata to show this is an image stack
+            h.attrs["CLASS"] = np.string_("IMAGE")
+            h.attrs["IMAGE_VERSION"] = np.string_("1.2")
+            h.attrs["IMAGE_SUBCLASS"] = np.string_("IMAGE_GRAYSCALE")
+            h.attrs["DISPLAY_ORIGIN"] = np.string_("LL")
+            h.attrs["IMAGE_WHITE_IS_ZERO"] = np.uint8(0)
+            # time vector
+            f[f"/{wl}/time"] = imgs[wl].time.values.astype(np.string_)
+            # camera location
             if "lat" in imgs[wl].coords:
-                h[f"/{wl}/lat"] = imgs[wl].lat
-                h[f"/{wl}/lon"] = imgs[wl].lon
+                f[f"/{wl}/lat"] = imgs[wl].lat
+                f[f"/{wl}/lon"] = imgs[wl].lon
 
 
 def load_hdf5(filename: Path, treq: T.Sequence[datetime] = None, wavelenreq: T.Sequence[str] = None) -> T.Dict[str, T.Any]:
