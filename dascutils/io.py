@@ -48,6 +48,23 @@ def load(
     if not flist:
         return {}
 
+    # %% load data from good files, discarding bad
+    files, img, time, wavelen = _sift(flist)
+    # %% collect output
+    imgs = _collect(files, img, time, wavelen)
+    # %% camera location
+    imgs = _camloc(files[0], imgs)
+    # %% az / el
+    imgs = _azel(azelfn, imgs)
+    # %% projections
+    imgs = _project(imgs, wavelength_altitude_km)
+
+    return imgs
+
+
+def _sift(flist: T.Sequence[Path],) -> T.Tuple[T.Sequence[Path], T.Sequence[np.ndarray], T.Sequence[datetime], T.Sequence[str]]:
+    """ find good files from bad files and preload the data """
+
     time = []
     files = []  # to only keep filesnames for "good" files
     img: np.ndarray = []
@@ -67,16 +84,7 @@ def load(
         wavelen.append(w)
     warnings.resetwarnings()
 
-    # %% collect output
-    imgs = _collect(files, img, time, wavelen)
-    # %% camera location
-    imgs = _camloc(files[0], imgs)
-    # %% az / el
-    imgs = _azel(azelfn, imgs)
-    # %% projections
-    imgs = _project(imgs, wavelength_altitude_km)
-
-    return imgs
+    return files, img, time, wavelen
 
 
 def _project(imgs: T.Dict[str, xarray.DataArray], wavelength_altitude_km: T.Dict[str, float]) -> T.Dict[str, xarray.DataArray]:
