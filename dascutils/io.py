@@ -49,11 +49,9 @@ def load(
         return {}
 
     # %% load data from good files, discarding bad
-    files, img, time, wavelen = _sift(flist)
-    # %% collect output
-    imgs = _collect(files, img, time, wavelen)
+    imgs = _sift(flist)
     # %% camera location
-    imgs = _camloc(files[0], imgs)
+    imgs = _camloc(imgs)
     # %% az / el
     imgs = _azel(azelfn, imgs)
     # %% projections
@@ -62,7 +60,7 @@ def load(
     return imgs
 
 
-def _sift(flist: T.Sequence[Path],) -> T.Tuple[T.Sequence[Path], T.Sequence[np.ndarray], T.Sequence[datetime], T.Sequence[str]]:
+def _sift(flist: T.Sequence[Path],) -> T.Dict[str, xarray.DataArray]:
     """ find good files from bad files and preload the data """
 
     time = []
@@ -84,7 +82,7 @@ def _sift(flist: T.Sequence[Path],) -> T.Tuple[T.Sequence[Path], T.Sequence[np.n
         wavelen.append(w)
     warnings.resetwarnings()
 
-    return files, img, time, wavelen
+    return _collect(files, img, time, wavelen)
 
 
 def _project(imgs: T.Dict[str, xarray.DataArray], wavelength_altitude_km: T.Dict[str, float]) -> T.Dict[str, xarray.DataArray]:
@@ -203,17 +201,19 @@ def _slicereq(fin: Path, treq: T.Sequence[datetime], wavelenreq: T.Sequence[str]
     return flist
 
 
-def _camloc(fn: Path, data: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
+def _camloc(imgs: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
     """
     Camera altitude is not specified in the DASC files.
     This can be mitigated in the end user program with a WGS-84 height above
     ellipsoid lookup.
     """
-    data["alt0"] = 0.0
 
-    data.update(getcoords(fn))
+    imgs["alt0"] = 0.0
+    # arbitrarily pick a filename as camera is stationary
+    filename = imgs[imgs['wavelengths'][0]].filename[0]
+    imgs.update(getcoords(filename))
 
-    return data
+    return imgs
 
 
 def _azel(azelfn: Path, data: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
