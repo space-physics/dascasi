@@ -210,7 +210,7 @@ def _camloc(imgs: T.Dict[str, T.Any], path: Path) -> T.Dict[str, T.Any]:
 
     imgs["alt0"] = 0.0
     # arbitrarily pick a filename as camera is stationary
-    filename = path / imgs[imgs['wavelengths'][0]].filename[0]
+    filename = path / imgs[imgs["wavelengths"][0]].filename[0]
     imgs.update(getcoords(filename))
 
     return imgs

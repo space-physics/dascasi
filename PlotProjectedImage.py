@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
 Plots image projected to per-wavelength altitude
+
+for simplicity, hard-coded to test data, but can be used for any data.
 """
 
 from pathlib import Path
@@ -9,7 +11,7 @@ import dascutils as du
 import dascutils.plots as dup
 
 R = Path(__file__).parent
-data_dir = R / "tests"
+data_dir = R / "tests/data"
 cal_stem = R / "cal" / "PKR_DASC_20110112_"
 
 

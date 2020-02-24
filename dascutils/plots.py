@@ -1,12 +1,19 @@
 from pathlib import Path
 import numpy as np
 import typing
+import logging
 from datetime import timedelta, datetime
 import xarray
 from matplotlib.pyplot import draw, pause, figure
 from matplotlib.colors import LogNorm
+import matplotlib.ticker as mt
 
-#
+try:
+    import cartopy
+    from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+except ImportError:
+    logging.warning("Missing cartopy, plotting on rectangular grid.")
+    cartopy = None
 try:
     import themisasi.plots as themisplot
 except ImportError:
@@ -26,11 +33,25 @@ def plot_projected_image(imgs: xarray.DataArray):
 
     for img in imgs:
         fg = figure()
-        ax = fg.gca()
+        if cartopy is None:
+            ax = fg.gca()
+        else:
+            ax = fg.gca(projection=cartopy.crs.PlateCarree())
+            ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5, linestyle=":")
+            hgl = ax.gridlines(crs=cartopy.crs.PlateCarree(), color="gray", linestyle="--", linewidth=0.5)
+            hgl.xlabels_bottom = True
+            hgl.ylabels_left = True
+            hgl.xformatter = LONGITUDE_FORMATTER
+            hgl.yformatter = LATITUDE_FORMATTER
+            hgl.xlocator = mt.FixedLocator(range(-180, -110, 10))
+            hgl.ylocator = mt.FixedLocator(range(55, 85, 5))
         ax.pcolormesh(imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, "Grays"))
-        ax.set_title(f"{str(img.time.values)[:-10]}: {imgs.name} " r"$\AA$" f"at {imgs.mapping_alt_km} km altitude")
+        ax.set_title(f"{str(img.time.values)[:-10]}: {imgs.name} " r"$\AA$" f" at {imgs.mapping_alt_km} km altitude")
         ax.set_xlabel("geographic longitude")
         ax.set_ylabel("geographic latitude")
+
+        lims = (-175, -120, 55, 75)
+        ax.set_extent(lims)
 
 
 def histogram_dasc(imgs: typing.Dict[str, typing.Any], outdir=None):
