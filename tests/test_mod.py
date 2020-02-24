@@ -28,7 +28,7 @@ def test_nonexistent_file(tmp_path):
     ],
 )
 def test_basic_load(wavelength, L, t):
-    imgs = du.load(R)
+    imgs = du.load(R / 'data')
     assert isinstance(imgs, dict)
     assert isinstance(imgs[wavelength], xarray.DataArray)
 
@@ -41,7 +41,7 @@ def test_basic_load(wavelength, L, t):
 
 
 def test_timerange_and_wavelength():
-    data = du.load(R, azelstem, treq=("2012-01-03T08:32:02", "2016-01-04"), wavelenreq="0558")
+    data = du.load(R / 'data', azelstem, treq=("2012-01-03T08:32:02", "2016-01-04"), wavelenreq="0558")
     assert data["0558"].shape == (2, 512, 512)
     assert "0428" not in data
     assert "0630" not in data
@@ -49,7 +49,7 @@ def test_timerange_and_wavelength():
 
 @pytest.mark.parametrize("wavelength, L", [("0558", 1)])
 def test_singletime(wavelength, L):
-    data = du.load(R, azelstem, treq="2012-01-03T08:32:02")
+    data = du.load(R / 'data', azelstem, treq="2012-01-03T08:32:02")
     assert data[wavelength].shape == (L, 512, 512)
     assert data["az"].shape == (512, 512)
     assert data["el"].shape == (512, 512)
@@ -59,14 +59,14 @@ def test_singletime(wavelength, L):
 @pytest.mark.parametrize("wavelength, L", [("0428", 1), ("0558", 2), ("0630", 1)])
 def test_full_load(wavelength, L):
     # %% wavelength request
-    data = du.load(R, azelstem, wavelenreq=wavelength)
+    data = du.load(R / 'data', azelstem, wavelenreq=wavelength)
     assert data[wavelength].shape == (L, 512, 512)
 
 
 def test_read_write_hdf5(tmp_path):
     outfn = tmp_path / "test.h5"
 
-    ref = du.load(R, azelstem)
+    ref = du.load(R / 'data', azelstem)
     du.save_hdf5(ref, outfn)
 
     dat = du.load(outfn)

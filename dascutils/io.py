@@ -51,7 +51,7 @@ def load(
     # %% load data from good files, discarding bad
     imgs = _sift(flist)
     # %% camera location
-    imgs = _camloc(imgs)
+    imgs = _camloc(imgs, flist[0].parent)
     # %% az / el
     imgs = _azel(azelfn, imgs)
     # %% projections
@@ -201,7 +201,7 @@ def _slicereq(fin: Path, treq: T.Sequence[datetime], wavelenreq: T.Sequence[str]
     return flist
 
 
-def _camloc(imgs: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
+def _camloc(imgs: T.Dict[str, T.Any], path: Path) -> T.Dict[str, T.Any]:
     """
     Camera altitude is not specified in the DASC files.
     This can be mitigated in the end user program with a WGS-84 height above
@@ -210,7 +210,7 @@ def _camloc(imgs: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
 
     imgs["alt0"] = 0.0
     # arbitrarily pick a filename as camera is stationary
-    filename = imgs[imgs['wavelengths'][0]].filename[0]
+    filename = path / imgs[imgs['wavelengths'][0]].filename[0]
     imgs.update(getcoords(filename))
 
     return imgs
