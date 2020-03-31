@@ -46,7 +46,7 @@ def load(
 
     flist = _slicereq(fin, treq, wavelenreq)
     if not flist:
-        return {}
+        raise FileNotFoundError(f"No files found for criteria in {fin}")
 
     # %% load data from good files, discarding bad
     imgs = _sift(flist)

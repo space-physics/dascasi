@@ -14,9 +14,8 @@ azelstem = R.parent / "cal/PKR_DASC_20110112"
 
 
 def test_nonexistent_file(tmp_path):
-    x = du.load(tmp_path)
-    assert isinstance(x, dict)
-    assert not x
+    with pytest.raises(FileNotFoundError):
+        du.load(tmp_path)
 
 
 @pytest.mark.parametrize(
