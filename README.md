@@ -10,7 +10,7 @@ Utilities for plotting, saving, analyzing the Poker Flat Research Range Digital 
 This program handles the corrupted FITS files due to the RAID array failure on 2013 data.
 The raw data FITS contain one image per file.
 
-![DASC projected images](./tests/data/dasc_projection_plot_pc.png)
+![DASC projected images](./dascutils/tests/data/dasc_projection_plot_pc.png)
 
 (plot above created with PlotProjectedImage.py)
 
