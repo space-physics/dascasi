@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+"""
+Download DASC data for various sites.
+
+examples:
+
+site VEE for one minute:
+
+    python DownloadDASC.py VEE 2017-02-13T06:59 2017-02-13T07:00 ~/data
+"""
 import dascutils as du
 from argparse import ArgumentParser
 

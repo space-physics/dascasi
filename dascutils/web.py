@@ -35,7 +35,7 @@ def download(
     odir = Path(odir).expanduser().resolve()
     odir.mkdir(exist_ok=True, parents=True)
     # %% get available files for this day
-    rparent = f"{fpath}/DASC/RAW/{start.year:4d}"
+    rparent = f"{fpath}/DASC/RAW/"
     rday = f"{start.year:4d}{start.month:02d}{start.day:02d}"
     # %% wavelength
     if wavelen is None:
@@ -55,9 +55,14 @@ def download(
         if site not in slist:
             raise ValueError(f"site '{site}' not found in remote directory: {slist}")
         F.cwd(rparent)
+        ylist = F.nlst()
+        if str(start.year) not in ylist:
+            raise ValueError(f"site {site} only has data for years: {ylist}")
+        ydir = str(start.year)
+        F.cwd(ydir)
         dlist = F.nlst()
         if rday not in dlist:
-            raise ValueError(f"{rday} does not exist under {host}/{rparent}")
+            raise ValueError(f"{rday} does not exist under {host}/{rparent}/{ydir}. Available: {dlist}")
 
         print("downloading to", odir)
         F.cwd(rday)
@@ -93,7 +98,11 @@ def get_filenames(days: typing.Sequence[str], wavelen: str, start: datetime, end
         if wavelen and filename[9:13] not in wavelen:
             continue
 
-        tfile = datetime.strptime(filename[14:-9], "%Y%m%d_%H%M%S")
+    # names like:
+    # * VEE_DASC_0000_20170102_030405.FIT
+    # * PKR_DASC_0428_20170102_030405.678.FITS
+
+        tfile = datetime.strptime(filename[14:28], "%Y%m%d_%H%M%S")
         if tfile < start or tfile > end:
             continue
         yield filename
