@@ -1,0 +1,2 @@
+recursive-include dascutils/cal *.fits
+recursive-include dascutils/tests/data/ *.FITS
