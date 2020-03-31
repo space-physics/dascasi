@@ -91,12 +91,12 @@ additional options include:
 
 ### Spatial registration (plate scale)
 
-The `cal/` directory contains `AZ` and `EL` files corresponding to each pixel.
+The `dascutils/cal/` directory contains `AZ` and `EL` files corresponding to each pixel.
 
 ```python
 import dascutils as du
 
-data = du.load('tests/', azelfn='cal/PKR_DASC_20110112')
+data = du.load('dascutils/tests/', azelfn='dascutils/cal/PKR_DASC_20110112')
 ```
 
 now `data` includes data variables `az` and `el`, same shape as the image(s), along with camera position in `lat` `lon` `alt_m`.

@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 import dascutils as du
 import dascutils.plots as dup
 
-R = Path(__file__).parent.resolve()
+R = Path(du.__file__).parent.resolve()
 
 
 def plotdasc(img: xarray.Dataset, outdir: Path, cadence: float):

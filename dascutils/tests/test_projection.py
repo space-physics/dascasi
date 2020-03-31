@@ -4,8 +4,8 @@ import dascutils as du
 import pytest
 from pytest import approx
 
-R = Path(__file__).parent
-azelstem = R.parent / "cal/PKR_DASC_20110112"
+R = Path(du.__file__).parent
+azelstem = R / "cal/PKR_DASC_20110112"
 mapping_altitude_km = {"0428": 110.0, "0558": 150.0, "0630": 200.0}
 
 
@@ -19,7 +19,7 @@ mapping_altitude_km = {"0428": 110.0, "0558": 150.0, "0630": 200.0}
 )
 def test_projection(wavelen, refalt, reflat, reflon):
 
-    data = du.load(R / "data", azelstem, wavelenreq=wavelen, wavelength_altitude_km=mapping_altitude_km)
+    data = du.load(R / "tests/data", azelstem, wavelenreq=wavelen, wavelength_altitude_km=mapping_altitude_km)
 
     assert data[wavelen].mapping_alt_km == approx(refalt)
 

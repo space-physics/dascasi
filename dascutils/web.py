@@ -51,10 +51,13 @@ def download(
     flist = []
 
     with ftplib.FTP(ftop, "anonymous", "guest", timeout=15) as F:
+        slist = F.nlst()
+        if site not in slist:
+            raise ValueError(f"site '{site}' not found in remote directory: {slist}")
         F.cwd(rparent)
         dlist = F.nlst()
         if rday not in dlist:
-            raise FileNotFoundError(f"{rday} does not exist under {host}/{rparent}")
+            raise ValueError(f"{rday} does not exist under {host}/{rparent}")
 
         print("downloading to", odir)
         F.cwd(rday)

@@ -9,9 +9,14 @@ import sys
 R = Path(__file__).parent
 
 
-def test_nonexistent_remote():
+def test_nonexist_site(tmp_path):
     with pytest.raises(ValueError):
-        du.download(("2015-10-07T08:23:50", "2015-10-07T08:23:56"), site="PKR", odir=R / "data", wavelen="428")
+        du.download(("2015-10-07T08:23:50", "2015-10-07T08:23:56"), site="pk", odir=tmp_path, wavelen="428")
+
+
+def test_nonexist_remote(tmp_path):
+    with pytest.raises(ValueError):
+        du.download(("2015-10-07T08:23:50", "2015-10-07T08:23:56"), site="PKR", odir=tmp_path, wavelen="428")
 
 
 @pytest.mark.parametrize("wavelength", (["0428"], ("0428", "0558")), ids=("one_wavelength", "two_wavelengths"))
