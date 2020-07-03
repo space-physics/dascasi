@@ -1,2 +1,2 @@
-recursive-include dascutils/cal *.fits
-graft dascutils/tests/data
+recursive-include src/dascutils/cal *.fits
+graft src/dascutils/tests/data

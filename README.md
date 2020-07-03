@@ -1,7 +1,7 @@
 # DASC all-sky camera utilities
 
 [![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
-![ci_python](https://github.com/space-physics/dascutils/workflows/ci_python/badge.svg)
+![ci](https://github.com/space-physics/dascutils/workflows/ci/badge.svg)
 
 [![PyPi versions](https://img.shields.io/pypi/pyversions/dascutils.svg)](https://pypi.python.org/pypi/dascutils)
 [![PyPi Download stats](http://pepy.tech/badge/dascutils)](http://pepy.tech/project/dascutils)
@@ -12,7 +12,7 @@ The raw data FITS contain one image per file.
 
 ![DASC projected images](./dascutils/tests/data/dasc_projection_plot_pc.png)
 
-(plot above created with PlotProjectedImage.py)
+(plot above created with scripts/PlotProjectedImage.py)
 
 ## Install
 
@@ -55,7 +55,7 @@ Now we give several examples.
 Download Poker Flat Research Range "PKR" October 7, 2015 from 8:23 to 8:54 UTC to `~/data/`:
 
 ```sh
-python dascutils/DownloadDASC.py PKR 2015-10-07T08:23 2015-10-07T08:54 ~/data
+dascasi_download PKR 2015-10-07T08:23 2015-10-07T08:54 ~/data
 ```
 
 * `-w` four-letter wavelength in nanometers e.g. 0630
@@ -71,7 +71,7 @@ As an alternative in general, it's more convenient to have a single HDF5 file fo
 Convert a bunch of FITS files to HDF5 like:
 
 ```sh
-python dascutils/ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07.h5
+python scripts/ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07.h5
 ```
 
 * `-t` start stop times to convert
@@ -81,7 +81,7 @@ python dascutils/ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07
 Play movie of all wavelengths in subplots for files in a directory, for example:
 
 ```sh
-python dascutils/PlayMovie.py dascutils/tests/
+dascasi_movie dascutils/tests/
 ```
 
 additional options include:

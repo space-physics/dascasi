@@ -80,6 +80,11 @@ def download(
                 F.retrbinary(f"RETR {filename}", h.write)
                 sleep(0.5)  # anti-leech
 
+        if len(flist) == 0:
+            raise ValueError(f"could not find files between {start} {end}")
+
+        print(f"found or downloaded {len(flist)} files")
+
     return flist
 
 
@@ -93,16 +98,21 @@ def skip_exist(filename: Path, F) -> bool:
 
 
 def get_filenames(days: typing.Sequence[str], wavelen: str, start: datetime, end: datetime) -> typing.Iterator[str]:
+
+    print(f"searching {len(days)} remote files")
+
     for filename in days:
         # %% qualifiers
+        if not filename.lower().endswith((".fit", ".fits")):
+            # extra subdirs, extraneous files
+            continue
         if wavelen and filename[9:13] not in wavelen:
             continue
 
-    # names like:
-    # * VEE_DASC_0000_20170102_030405.FIT
-    # * PKR_DASC_0428_20170102_030405.678.FITS
-
-        tfile = datetime.strptime(filename[14:28], "%Y%m%d_%H%M%S")
+        # names like:
+        # * VEE_DASC_0000_20170102_030405.FIT
+        # * PKR_DASC_0428_20170102_030405.678.FITS
+        tfile = datetime.strptime(filename[14:29], "%Y%m%d_%H%M%S")
         if tfile < start or tfile > end:
             continue
         yield filename

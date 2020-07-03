@@ -4,7 +4,6 @@ import socket
 import ftplib
 import subprocess
 from pathlib import Path
-import sys
 
 R = Path(__file__).parent
 
@@ -40,7 +39,7 @@ def test_mod(tmp_path, wavelength):
 def test_script():
     try:
         subprocess.check_call(
-            [sys.executable, "DownloadDASC.py", "2015-10-07T08:23:54", "2015-10-07T08:23:56", str(R / "data")], cwd=R.parent
+            ["dascasi_download", "PKR", "2015-10-07T08:23:54", "2015-10-07T08:23:56", str(R / "data")], cwd=R.parent
         )
     except subprocess.CalledProcessError as e:
         pytest.skip(f"Bad internet connection?   {e}")

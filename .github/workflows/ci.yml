@@ -1,26 +1,26 @@
-name: ci_python
+name: ci
 
 on:
   push:
     paths:
     - "**/*.py"
     - ".github/workflows/ci.yml"
-  pull_request:
-
 
 jobs:
 
-# 3.7 due to astropy
   linux:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v2
       with:
-        python-version: '3.7'
+        python-version: '3.8'
+
     - run: pip install .[tests,lint]
+
     - run: flake8
-    - run: mypy .
+    - run: mypy . src
+
     - run: pytest
 
   integration:
@@ -30,8 +30,10 @@ jobs:
         os: [windows-latest, macos-latest]
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v2
       with:
         python-version: '3.7'
+
     - run: pip install .[tests]
+
     - run: pytest
