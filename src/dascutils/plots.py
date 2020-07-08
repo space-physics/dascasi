@@ -20,6 +20,19 @@ except ImportError:
     themisplot = None
 
 
+def contour_azel(dat: xarray.DataArray, cal_stem: Path):
+    fg = figure()
+    ax = fg.gca()
+
+    for k, c in zip(('az', 'el'), ("red", "indigo")):
+        cs = ax.contour(dat[k], colors=c)
+        ax.clabel(cs, inline=1, fmt="%0.1f")
+
+    ax.set_xlabel("x pixel")
+    ax.set_ylabel("y pixel")
+    ax.set_title(f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f}) \nAzimuth / Elevation")
+
+
 def plot_projected_image(imgs: xarray.DataArray):
     """
     plots a projected image at an altitude (lat, lon)
@@ -50,8 +63,9 @@ def plot_projected_image(imgs: xarray.DataArray):
         ax.set_xlabel("geographic longitude")
         ax.set_ylabel("geographic latitude")
 
-        lims = (-175, -120, 55, 75)
-        ax.set_extent(lims)
+        if cartopy is not None:
+            lims = (-175, -120, 55, 75)
+            ax.set_extent(lims)
 
 
 def histogram_dasc(imgs: typing.Dict[str, typing.Any], outdir=None):

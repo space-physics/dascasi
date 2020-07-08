@@ -19,7 +19,7 @@ The raw data FITS contain one image per file.
 Most people will find it useful to have the example scripts and the tests built into the Git repo.
 
 ```sh
-git clone https://github.com/space-physics/dascutils
+git clone https://github.com/space-physics/dascasi
 
 pip install -e dascutils
 ```
@@ -37,7 +37,7 @@ data = du.load('tests/PKR_DASC_0558_20151007_082351.743.FITS')
 This returns a dictionary of
 [xarray.DataArray](http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html),
 which is like a "smart" Numpy array.
-The images are index by wavelength if it was specified in the data file, or 'unknown' otherwise.
+The images are indexed by wavelength if it was specified in the data file, or 'unknown' otherwise.
 The images are in a 3-D stack: (time, x, y).
 `data.time` is the time of each image.
 also several metadata parameters are included like the location of the camera.
