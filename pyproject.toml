@@ -3,3 +3,7 @@ requires = ["setuptools", "wheel"]
 
 [tool.black]
 line-length = 132
+
+[tool.pytest.ini_options]
+addopts = "-ra -v --ignore=test_download.py"
+filterwarnings = "ignore::DeprecationWarning"

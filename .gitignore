@@ -1,11 +1,6 @@
 .pytest_cache/
 .mypy_cache/
 
-*.FITS
-*.avi
-*.mkv
-*.png
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

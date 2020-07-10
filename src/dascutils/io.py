@@ -236,9 +236,9 @@ def _azel(azelfn: Path, data: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
         if downscale != 1:
             log.warning(f"downsizing images by factors of {downscale[1:]} to match calibration data")
 
-        if len(wavelen) == 1 and wavelen[0] == "unknown":
+        if len(wavelen) == 1 and wavelen[0] == "0000":
             if downscale != 1:
-                data["unknown"] = downscale_local_mean(data["unknown"], downscale)
+                data["0000"] = downscale_local_mean(data["0000"], downscale)
         else:
             if downscale != 1:
                 for w in np.unique(wavelen):
@@ -303,7 +303,12 @@ def getwavelength(fn: Path) -> str:
         try:
             w = h[0].header["FILTWAV"]
         except KeyError:
-            w = "unknown"
+            # extract from filename (older DASC FITS files have this convention too)
+            w = fn.stem[9:13]
+            try:
+                int(w)
+            except ValueError:
+                w = "0000"
 
     return w
 

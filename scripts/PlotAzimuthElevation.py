@@ -22,4 +22,7 @@ imgs = du.load(data_dir, cal_stem)
 # If you omit "cal_stem", `imgs` will not have "az,el" keys
 
 dup.contour_azel(imgs, cal_stem)
+
+dup.pcolor_azel(imgs, cal_stem)
+
 show()

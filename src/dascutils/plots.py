@@ -20,11 +20,53 @@ except ImportError:
     themisplot = None
 
 
+def image_azel(dat: xarray.DataArray, cal_stem: str, name: str = ""):
+    """ plot DASC image with az/el contour overlay
+    """
+
+    for k in dat["wavelengths"]:
+        for im in dat[k]:
+            fg = figure()
+            ax = fg.gca()
+            ax.pcolormesh(im, cmap="Greys_r", norm=LogNorm())
+            cs = ax.contour(dat["az"], colors="white", alpha=0.5)
+            ax.clabel(cs, inline=1, fmt="%0.1f")
+            cs = ax.contour(dat["el"], colors="yellow", alpha=0.5)
+            ax.clabel(cs, inline=1, fmt="%0.1f")
+
+            ax.set_xlabel("x pixel")
+            ax.set_ylabel("y pixel")
+            ax.set_title(f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f}) \nAzimuth / Elevation  {name}")
+
+
+def pcolor_azel(dat: xarray.DataArray, cal_stem: Path):
+    """ plots az/el as pcolor with contour overlay """
+
+    fg = figure(figsize=(12, 5))
+    axs = fg.subplots(1, 2, sharey=True, sharex=True)
+
+    ax = axs[0]
+    ax.set_xlabel("x pixel")
+    ax.set_ylabel("y pixel")
+    ax.pcolormesh(dat["az"])
+    cs = ax.contour(dat["az"], colors="white", alpha=0.5)
+    ax.clabel(cs, inline=1, fmt="%0.1f")
+    ax.set_title("Azimuth (degrees)")
+
+    ax = axs[1]
+    ax.pcolormesh(dat["el"])
+    cs = ax.contour(dat["el"], colors="white", alpha=0.5)
+    ax.clabel(cs, inline=1, fmt="%0.1f")
+    ax.set_title("Horizon elevation angle (degrees)")
+
+    fg.suptitle(f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f})")
+
+
 def contour_azel(dat: xarray.DataArray, cal_stem: Path):
     fg = figure()
     ax = fg.gca()
 
-    for k, c in zip(('az', 'el'), ("red", "indigo")):
+    for k, c in zip(("az", "el"), ("red", "indigo")):
         cs = ax.contour(dat[k], colors=c)
         ax.clabel(cs, inline=1, fmt="%0.1f")
 
@@ -98,7 +140,7 @@ def moviedasc(imgs: typing.Dict[str, typing.Any], outdir: Path, cadence: float, 
     axs = np.atleast_1d(fg.subplots(1, len(wavlen)))
 
     # %% setup figures
-    if "unknown" not in wavlen:
+    if "0000" not in wavlen:
         Hi = []
         Ht = []
         for ax, w, mm, c in zip(axs, wavlen, ((350, 800), (350, 9000), (350, 900)), ("b", "g", "r")):
@@ -119,7 +161,7 @@ def moviedasc(imgs: typing.Dict[str, typing.Any], outdir: Path, cadence: float, 
         ax = axs[0]
         ax.set_xticks([])
         ax.set_yticks([])
-        hi = ax.imshow(imgs["unknown"][0], vmin=(350, 10000), origin="lower", norm=LogNorm(), cmap="gray")
+        hi = ax.imshow(imgs["0000"][0], vmin=(350, 10000), origin="lower", norm=LogNorm(), cmap="gray")
 
         ht = ax.set_title("")
         if themisplot is not None:
@@ -130,12 +172,12 @@ def moviedasc(imgs: typing.Dict[str, typing.Any], outdir: Path, cadence: float, 
     dt = timedelta(seconds=cadence)
 
     while t <= t1:
-        if "unknown" not in wavlen:
+        if "0000" not in wavlen:
             for w, hi, ht in zip(wavlen, Hi, Ht):
                 im = imgs[w].sel(time=t, method="nearest")
                 _update_panel(im, hi, ht)
         else:
-            im = imgs["unknown"].sel(time=t, method="nearest")
+            im = imgs["0000"].sel(time=t, method="nearest")
             _update_panel(im, hi, ht)
 
         draw(), pause(0.05)  # the pause avoids random crashes

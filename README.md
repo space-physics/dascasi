@@ -2,7 +2,6 @@
 
 [![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
 ![ci](https://github.com/space-physics/dascutils/workflows/ci/badge.svg)
-
 [![PyPi versions](https://img.shields.io/pypi/pyversions/dascutils.svg)](https://pypi.python.org/pypi/dascutils)
 [![PyPi Download stats](http://pepy.tech/badge/dascutils)](http://pepy.tech/project/dascutils)
 
@@ -11,8 +10,11 @@ This program handles the corrupted FITS files due to the RAID array failure on 2
 The raw data FITS contain one image per file.
 
 ![DASC projected images](./src/dascutils/tests/data/dasc_projection_plot_pc.png)
+(using scripts/PlotProjectedImage.py
+)
+![DASC az/el PKR](./src/dascutils/tests/data/dasc_azel.png)
+(using scripts/PlotAzimuthElevation.py)
 
-(plot above created with scripts/PlotProjectedImage.py)
 
 ## Install
 
@@ -37,7 +39,7 @@ data = du.load('tests/PKR_DASC_0558_20151007_082351.743.FITS')
 This returns a dictionary of
 [xarray.DataArray](http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html),
 which is like a "smart" Numpy array.
-The images are indexed by wavelength if it was specified in the data file, or 'unknown' otherwise.
+The images are indexed by wavelength if it was specified in the data file, or '0000' otherwise.
 The images are in a 3-D stack: (time, x, y).
 `data.time` is the time of each image.
 also several metadata parameters are included like the location of the camera.
