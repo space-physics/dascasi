@@ -12,7 +12,7 @@ import dascutils.plots as dup
 
 R = Path(du.__file__).parent
 data_dir = R / "tests/data"
-cal_stem = R / "cal/PKR_DASC_20110112_"
+cal_stem = data_dir / "cal/PKR_DASC_0558_20150213_"
 
 
 mapping_altitude_km = {"0428": 110.0, "0558": 150.0, "0630": 200.0, "0000": 150.0}

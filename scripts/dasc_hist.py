@@ -21,7 +21,7 @@ def main():
     p = ArgumentParser(description="for Poker Flat DASC all sky camera, read az/el mapping and images")
     p.add_argument("indir", help="directory of .fits or specific .fits file")
     p.add_argument("-t", "--tlim", help="only plot data in this range", nargs=2)
-    p.add_argument("-a", "--azelfn", help="stem for DASC .fits azimuth calibration", default="cal/PKR_DASC_20110112")
+    p.add_argument("-a", "--azelfn", help="stem for DASC .fits azimuth calibration")
     p.add_argument("-w", "--wavelength", help="select wavelength(s) to plot simultaneously [428 558 630]", type=int, nargs="+")
     p.add_argument(
         "-m",

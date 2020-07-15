@@ -341,8 +341,8 @@ def stem2fn(stem: Path) -> T.Tuple[Path, Path]:
 
     stemname = stem.name.rstrip("_")
 
-    azfn = stem.parent / (stemname + "_AZ_10deg.fits")
-    elfn = stem.parent / (stemname + "_EL_10deg.fits")
+    azfn = stem.parent / (stemname + "_Az.FIT")
+    elfn = stem.parent / (stemname + "_El.FIT")
 
     if not azfn.is_file() or not elfn.is_file():
         raise FileNotFoundError(f"did not find {azfn} \n {elfn}")

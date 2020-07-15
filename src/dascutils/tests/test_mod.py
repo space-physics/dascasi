@@ -10,7 +10,7 @@ import dascutils as du
 
 R = Path(__file__).parent
 
-azelstem = R.parent / "cal/PKR_DASC_20110112"
+azelstem = R / "data/cal/PKR_DASC_0558_20150213_"
 
 
 def test_nonexistent_file(tmp_path):

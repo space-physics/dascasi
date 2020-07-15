@@ -11,8 +11,9 @@ import dascutils as du
 import dascutils.plots as dup
 
 R = Path(du.__file__).parent
-data_file = R / "tests/data/PKR_DASC_0558_20151007_082351.743.FITS"
-cal_stem = R / "cal/PKR_DASC_20110112_"
+data_dir = R / "tests/data/"
+data_file = data_dir / "PKR_DASC_0558_20151007_082351.743.FITS"
+cal_stem = data_dir / "cal/PKR_DASC_0558_20150213_"
 
 
 imgs = du.load(data_file, cal_stem)

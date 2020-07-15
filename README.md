@@ -94,18 +94,21 @@ additional options include:
 
 ### Spatial registration (plate scale)
 
-The `dascutils/cal/` directory contains `AZ` and `EL` files corresponding to each pixel.
+To match data from DASC with other instruments, it is vital that the plate scale data user be appropriate for the time and instrument.
+Calibration data may be [downloaded](ftp://optics.gi.alaska.edu/Cal_data/), for other times / instruments please contact UAF-GI.
 
 ```python
 import dascutils as du
 
-data = du.load('dascutils/tests/', azelfn='dascutils/cal/PKR_DASC_20110112')
+data = du.load('dascutils/tests/', azelfn='/path/to/your_calibration_file')
 ```
 
 now `data` includes data variables `az` and `el`, same shape as the image(s), along with camera position in `lat` `lon` `alt_m`.
 
-* Be sure you know if you're using magnetic north or geographic north, or you'll see a rotation by the declination.
-* Note the date in the filename--perhaps the camera was moved since before or long after that date?
+* Be sure you know if you're using magnetic north or geographic north
+* Note the calibration date in the filename--was the camera was moved since that date?
+
+In all cases, the end user must manually verify the calibration with sky features such as stars / moon.
 
 ### Map Projection
 

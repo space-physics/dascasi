@@ -13,10 +13,10 @@ import dascutils as du
 import dascutils.plots as dup
 from matplotlib.pyplot import show
 
-R = Path(__file__).parent
+R = Path(du.__file__).parent
 
-data_dir = R / "../src/dascutils/tests/data"
-cal_stem = R / "../src/dascutils/cal/PKR_DASC_20110112"
+data_dir = R / "tests/data"
+cal_stem = data_dir / "cal/PKR_DASC_0558_20150213_"
 
 imgs = du.load(data_dir, cal_stem)
 # If you omit "cal_stem", `imgs` will not have "az,el" keys

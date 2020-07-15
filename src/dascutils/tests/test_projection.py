@@ -4,8 +4,8 @@ import dascutils as du
 import pytest
 from pytest import approx
 
-R = Path(du.__file__).parent
-azelstem = R / "cal/PKR_DASC_20110112"
+R = Path(__file__).parent
+azelstem = R / "data/cal/PKR_DASC_0558_20150213_"
 mapping_altitude_km = {"0428": 110.0, "0558": 150.0, "0630": 200.0}
 
 
