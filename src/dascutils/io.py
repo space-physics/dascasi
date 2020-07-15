@@ -252,7 +252,7 @@ def _azel(azelfn: Path, data: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
 
 
 def loadcal(azelfn: Path) -> T.Dict[str, np.ndarray]:
-    """Load DASC plate scale (degrees/pixel)"""
+    """ Load DASC plate scale (degrees/pixel) """
     if isinstance(azelfn, (str, Path)):
         azfn, elfn = stem2fn(azelfn)
     elif len(azelfn) == 1:
@@ -299,7 +299,8 @@ def gettime(fn: Path) -> datetime:
 
 
 def getwavelength(fn: Path) -> str:
-    """ returns optical wavelength [nm] of DASC frame in file (assumes one frame per file)"""
+    """ returns optical wavelength [nm] of DASC frame in file.
+    Assumes one frame per file."""
 
     with fits.open(fn) as h:
         try:
