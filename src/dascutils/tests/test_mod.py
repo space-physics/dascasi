@@ -40,7 +40,7 @@ def test_basic_load(wavelength, L, t):
 
 
 def test_timerange_and_wavelength():
-    data = du.load(R / "data", azelstem, treq=("2012-01-03T08:32:02", "2016-01-04"), wavelenreq="0558")
+    data = du.load(R / "data", treq=("2012-01-03T08:32:02", "2016-01-04"), wavelenreq="0558")
     assert data["0558"].shape == (2, 512, 512)
     assert "0428" not in data
     assert "0630" not in data
@@ -48,10 +48,8 @@ def test_timerange_and_wavelength():
 
 @pytest.mark.parametrize("wavelength, L", [("0558", 1)])
 def test_singletime(wavelength, L):
-    data = du.load(R / "data", azelstem, treq="2012-01-03T08:32:02")
+    data = du.load(R / "data", treq="2012-01-03T08:32:02")
     assert data[wavelength].shape == (L, 512, 512)
-    assert data["az"].shape == (512, 512)
-    assert data["el"].shape == (512, 512)
     assert data[wavelength].time.values.astype("datetime64[us]").astype(datetime) == datetime(2015, 10, 7, 8, 23, 51, 743000)
 
 
@@ -60,6 +58,8 @@ def test_full_load(wavelength, L):
     # %% wavelength request
     data = du.load(R / "data", azelstem, wavelenreq=wavelength)
     assert data[wavelength].shape == (L, 512, 512)
+    assert data["az"].shape == (512, 512)
+    assert data["el"].shape == (512, 512)
 
 
 def test_read_write_hdf5(tmp_path):

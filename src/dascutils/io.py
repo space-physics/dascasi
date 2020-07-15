@@ -46,7 +46,7 @@ def load(
 
     flist = _slicereq(fin, treq, wavelenreq)
     if not flist:
-        raise FileNotFoundError(f"No files found for criteria in {fin}")
+        raise FileNotFoundError(f"No files found in {fin}")
 
     # %% load data from good files, discarding bad
     imgs = _sift(flist)
@@ -167,8 +167,10 @@ def _slicereq(fin: Path, treq: T.Sequence[datetime], wavelenreq: T.Sequence[str]
         flist = list(fin.glob("*.FITS"))
         if os.name != "nt":
             flist += list(fin.glob("*.fits"))
-    else:
+    elif fin.is_file():
         flist = [fin]
+    else:
+        raise FileNotFoundError(f"{fin} is not a file or directory")
 
     # we may filter by time, so put in time order
     flist = sorted(flist)
