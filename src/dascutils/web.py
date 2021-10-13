@@ -5,20 +5,21 @@ and sends a bunch of zero-sized files.
 
 Best to download once and convert FITS stack to HDF5.
 """
+
+from __future__ import annotations
+import typing as T
 from pathlib import Path
 from time import sleep
 import ftplib
 from datetime import datetime
-import typing
 from urllib.parse import urlparse
+
 from .utils import time_bounds
 
 HOST = "ftp://optics.gi.alaska.edu"
 
 
-def download(
-    startend: typing.Tuple[datetime, datetime], site: str, odir: Path, host: str = None, wavelen: str = None
-) -> typing.List[Path]:
+def download(startend: tuple[datetime, datetime], site: str, odir: Path, host: str = None, wavelen: str = None) -> list[Path]:
     """
     startend: tuple of datetime
     """
@@ -97,7 +98,7 @@ def skip_exist(filename: Path, F) -> bool:
     return False
 
 
-def get_filenames(days: typing.Sequence[str], wavelen: str, start: datetime, end: datetime) -> typing.Iterator[str]:
+def get_filenames(days: list[str], wavelen: str, start: datetime, end: datetime) -> T.Iterator[str]:
 
     print(f"searching {len(days)} remote files")
 

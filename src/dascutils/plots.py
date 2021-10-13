@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pathlib import Path
 import numpy as np
 import typing
@@ -21,8 +22,7 @@ except ImportError:
 
 
 def image_azel(dat: xarray.DataArray, cal_stem: str, name: str = ""):
-    """ plot DASC image with az/el contour overlay
-    """
+    """plot DASC image with az/el contour overlay"""
 
     for k in dat["wavelengths"]:
         for im in dat[k]:
@@ -40,7 +40,7 @@ def image_azel(dat: xarray.DataArray, cal_stem: str, name: str = ""):
 
 
 def pcolor_azel(dat: xarray.DataArray, cal_stem: Path):
-    """ plots az/el as pcolor with contour overlay """
+    """plots az/el as pcolor with contour overlay"""
 
     fg = figure(figsize=(12, 5))
     axs = fg.subplots(1, 2, sharey=True, sharex=True)
@@ -110,7 +110,7 @@ def plot_projected_image(imgs: xarray.DataArray):
             ax.set_extent(lims)
 
 
-def histogram_dasc(imgs: typing.Dict[str, typing.Any], outdir=None):
+def histogram_dasc(imgs: dict[str, typing.Any], outdir=None):
     """
     creates per wavelength histograms
     the entries in list img correspond to wavelength, a 1-D array
@@ -131,7 +131,7 @@ def histogram_dasc(imgs: typing.Dict[str, typing.Any], outdir=None):
         fg.savefig(ofn, bbox_inches="tight")
 
 
-def moviedasc(imgs: typing.Dict[str, typing.Any], outdir: Path, cadence: float, rows=None, cols=None):
+def moviedasc(imgs: dict[str, typing.Any], outdir: Path, cadence: float, rows=None, cols=None):
 
     wavlen = imgs["wavelengths"]
 

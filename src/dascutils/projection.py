@@ -3,7 +3,8 @@ Created on Fri Sep 28 11:43:24 2018
 
 @author: smrak
 """
-import typing
+
+from __future__ import annotations
 import numpy as np
 from datetime import datetime
 from scipy.spatial import Delaunay
@@ -24,7 +25,7 @@ def interpolateCoordinate(x: np.ndarray, N: int = 512, method: str = "linear") -
 
 def interpSpeedUp(
     x_in: np.ndarray, y_in: np.ndarray, image: np.ndarray, N: int = 512, verbose: bool = True
-) -> typing.Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     The speedup is based on the scipy.interpolate.griddata algorithm. Thorough
     explanation is on the stackoverflow

@@ -3,14 +3,15 @@ Created on Fri Sep 28 11:43:24 2018
 
 @author: smrak
 """
+
+from __future__ import annotations
 import xarray
-import typing
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import numpy as np
 
 
-def get_time_slice(time: typing.Sequence[datetime], treq: typing.Sequence[datetime]) -> slice:
+def get_time_slice(time: list[datetime] | np.ndarray, treq: list[datetime]) -> slice:
     """
     given the times in a data stack and the requested time(s),
     return a slice for indexing the data stack
@@ -36,17 +37,19 @@ def get_time_slice(time: typing.Sequence[datetime], treq: typing.Sequence[dateti
         treq = [parse(treq[0]), parse(treq[1])]
 
     # %% time slice
-    time = np.atleast_1d(time)
+    time = np.atleast_1d(time)  # type: ignore
     if len(treq) == 1:  # single frame
-        j = abs(time - treq[0]).argmin()
+        j = abs(time - treq[0]).argmin()  # type: ignore
         i = slice(j, j + 1)  # ensures indexed lists remain list
     elif len(treq) == 2:  # frames within bounds
-        i = slice(abs(time - treq[0]).argmin(), abs(time - treq[1]).argmin() + 1)
+        i = slice(
+            abs(time - treq[0]).argmin(), abs(time - treq[1]).argmin() + 1  # type: ignore
+        )  # type: ignore
 
     return i
 
 
-def time_bounds(startend: typing.Tuple[datetime, datetime]) -> typing.Tuple[datetime, datetime]:
+def time_bounds(startend: tuple[datetime, datetime]) -> tuple[datetime, datetime]:
     start = parse(startend[0]) if isinstance(startend[0], str) else startend[0]  # type: ignore
     end = parse(startend[1]) if isinstance(startend[1], str) else startend[1]  # type: ignore
 
@@ -56,7 +59,7 @@ def time_bounds(startend: typing.Tuple[datetime, datetime]) -> typing.Tuple[date
     return start, end
 
 
-def getDASCimage(D: xarray.DataArray, ix: typing.Union[datetime, int] = None, coordinate: str = "wsg"):
+def getDASCimage(D: xarray.DataArray, ix: datetime | int = None, coordinate: str = "wsg"):
     assert isinstance(ix, (datetime, int))
     # Find the closest image for the given timestamp
     if isinstance(ix, datetime):
@@ -78,7 +81,7 @@ def getDASCimage(D: xarray.DataArray, ix: typing.Union[datetime, int] = None, co
     return dasc_dt, img
 
 
-def datetime2posix(dtime: typing.Union[datetime, typing.Sequence[datetime]]) -> typing.List[float]:
+def datetime2posix(dtime: datetime | list[datetime]) -> list[float]:
     """
     Convert an input list of datetime format timestamp to posix timestamp
     https://docs.python.org/3/library/datetime.html#datetime.datetime.timestamp

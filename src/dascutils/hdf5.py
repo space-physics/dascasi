@@ -1,6 +1,8 @@
 """
 functions using HDF5
 """
+
+from __future__ import annotations
 import h5py
 import typing as T
 from pathlib import Path
@@ -11,7 +13,7 @@ import xarray
 from .utils import get_time_slice
 
 
-def save_hdf5(imgs: T.Dict[str, T.Any], outfile: Path):
+def save_hdf5(imgs: dict[str, T.Any], outfile: Path):
     print("writing image stack to", outfile)
 
     with h5py.File(outfile, "w") as f:
@@ -45,7 +47,7 @@ def save_hdf5(imgs: T.Dict[str, T.Any], outfile: Path):
                 f[f"/{wl}/lon"] = imgs[wl].lon
 
 
-def load_hdf5(filename: Path, treq: T.Sequence[datetime] = None, wavelenreq: T.Sequence[str] = None) -> T.Dict[str, T.Any]:
+def load_hdf5(filename: Path, treq: list[datetime] = None, wavelenreq: list[str] = None) -> dict[str, T.Any]:
 
     imgs = {}
 

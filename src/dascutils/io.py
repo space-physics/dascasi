@@ -3,6 +3,8 @@
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
+
+from __future__ import annotations
 import os
 from pathlib import Path
 import warnings  # corrupt FITS files let off a flood of AstroPy warnings
@@ -32,10 +34,10 @@ log = logging.getLogger("DASCutils-io")
 def load(
     fin: Path,
     azelfn: Path = None,
-    treq: T.Sequence[datetime] = None,
-    wavelenreq: T.Sequence[str] = None,
-    wavelength_altitude_km: T.Dict[str, float] = None,
-) -> T.Dict[str, T.Any]:
+    treq: list[datetime] = None,
+    wavelenreq: list[str] = None,
+    wavelength_altitude_km: dict[str, float] = None,
+) -> dict[str, T.Any]:
     """
     reads FITS images and spatial az/el calibration for allsky camera
     Bdecl is in degrees, from IGRF model
@@ -60,13 +62,13 @@ def load(
     return imgs
 
 
-def _sift(flist: T.Sequence[Path],) -> T.Dict[str, xarray.DataArray]:
-    """ find good files from bad files and preload the data """
+def _sift(flist: list[Path]) -> dict[str, xarray.DataArray]:
+    """find good files from bad files and preload the data"""
 
     time = []
     files = []  # to only keep filesnames for "good" files
-    img: np.ndarray = []
-    wavelen: np.ndarray = []
+    img: list[np.ndarray] = []
+    wavelen: list[str] = []
 
     warnings.filterwarnings("ignore", category=VerifyWarning)
     for fn in flist:
@@ -85,8 +87,8 @@ def _sift(flist: T.Sequence[Path],) -> T.Dict[str, xarray.DataArray]:
     return _collect(files, img, time, wavelen)
 
 
-def _project(imgs: T.Dict[str, xarray.DataArray], wavelength_altitude_km: T.Dict[str, float]) -> T.Dict[str, xarray.DataArray]:
-    """ project image stack to specified per-wavelength altitudes """
+def _project(imgs: dict[str, xarray.DataArray], wavelength_altitude_km: dict[str, float]) -> dict[str, xarray.DataArray]:
+    """project image stack to specified per-wavelength altitudes"""
 
     if wavelength_altitude_km is None:
         return imgs
@@ -112,10 +114,8 @@ def _project(imgs: T.Dict[str, xarray.DataArray], wavelength_altitude_km: T.Dict
     return imgs
 
 
-def _collect(
-    files: T.Sequence[Path], img: T.Sequence[np.ndarray], time: T.Sequence[datetime], wavelen: T.Sequence[str]
-) -> T.Dict[str, xarray.DataArray]:
-    """ assemble image stack into dict of xarray.DataArray """
+def _collect(files: list[Path], img: list[np.ndarray], time: list[datetime], wavelen: list[str]) -> dict[str, xarray.DataArray]:
+    """assemble image stack into dict of xarray.DataArray"""
     img = np.array(img)
     time = np.array(time)
     wavelen = np.array(wavelen)
@@ -135,7 +135,7 @@ def _collect(
     return imgs
 
 
-def _loadimg(fn: Path) -> T.Tuple[np.ndarray, datetime, str]:
+def _loadimg(fn: Path) -> tuple[np.ndarray, datetime, str]:
     """
     DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
     just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
@@ -160,8 +160,8 @@ def _loadimg(fn: Path) -> T.Tuple[np.ndarray, datetime, str]:
     return im, time, getwavelength(fn)
 
 
-def _slicereq(fin: Path, treq: T.Sequence[datetime], wavelenreq: T.Sequence[str] = None) -> T.List[Path]:
-    """ given user parameters, determine slice for image stack vs. wavelength and time """
+def _slicereq(fin: Path, treq: list[datetime], wavelenreq: list[str] = None) -> list[Path]:
+    """given user parameters, determine slice for image stack vs. wavelength and time"""
 
     if fin.is_dir():
         flist = list(fin.glob("*.FITS"))
@@ -203,7 +203,7 @@ def _slicereq(fin: Path, treq: T.Sequence[datetime], wavelenreq: T.Sequence[str]
     return flist
 
 
-def _camloc(imgs: T.Dict[str, T.Any], path: Path) -> T.Dict[str, T.Any]:
+def _camloc(imgs: dict[str, T.Any], path: Path) -> dict[str, T.Any]:
     """
     Camera altitude is not specified in the DASC files.
     This can be mitigated in the end user program with a WGS-84 height above
@@ -218,7 +218,7 @@ def _camloc(imgs: T.Dict[str, T.Any], path: Path) -> T.Dict[str, T.Any]:
     return imgs
 
 
-def _azel(azelfn: Path, data: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
+def _azel(azelfn: Path, data: dict[str, T.Any]) -> dict[str, T.Any]:
 
     if not azelfn:
         return data
@@ -251,8 +251,8 @@ def _azel(azelfn: Path, data: T.Dict[str, T.Any]) -> T.Dict[str, T.Any]:
     return data
 
 
-def loadcal(azelfn: Path) -> T.Dict[str, np.ndarray]:
-    """ Load DASC plate scale (degrees/pixel) """
+def loadcal(azelfn: Path) -> dict[str, np.ndarray]:
+    """Load DASC plate scale (degrees/pixel)"""
     if isinstance(azelfn, (str, Path)):
         azfn, elfn = stem2fn(azelfn)
     elif len(azelfn) == 1:
@@ -286,7 +286,7 @@ def loadcal(azelfn: Path) -> T.Dict[str, np.ndarray]:
 
 
 def gettime(fn: Path) -> datetime:
-    """ returns time of DASC frame in file (assumes one frame per file)"""
+    """returns time of DASC frame in file (assumes one frame per file)"""
     with fits.open(fn, mode="readonly") as h:
         try:
             t = parse(h[0].header["OBSDATE"] + "T" + h[0].header["OBSSTART"])
@@ -299,7 +299,7 @@ def gettime(fn: Path) -> datetime:
 
 
 def getwavelength(fn: Path) -> str:
-    """ returns optical wavelength [nm] of DASC frame in file.
+    """returns optical wavelength [nm] of DASC frame in file.
     Assumes one frame per file."""
 
     with fits.open(fn) as h:
@@ -316,8 +316,8 @@ def getwavelength(fn: Path) -> str:
     return w
 
 
-def getcoords(fn: Path) -> T.Dict[str, float]:
-    """ get lat, lon from DASC header"""
+def getcoords(fn: Path) -> dict[str, float]:
+    """get lat, lon from DASC header"""
 
     with fits.open(fn) as h:
         try:
@@ -331,7 +331,7 @@ def getcoords(fn: Path) -> T.Dict[str, float]:
     return latlon
 
 
-def stem2fn(stem: Path) -> T.Tuple[Path, Path]:
+def stem2fn(stem: Path) -> tuple[Path, Path]:
     """if user specifies the stem to Az,El, generate the az, el filenames"""
     assert isinstance(stem, (str, Path))
 

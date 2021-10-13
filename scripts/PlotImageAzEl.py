@@ -26,13 +26,13 @@ cal_stem = data_dir / "cal/PKR_DASC_0558_20150213_"
 imgs = du.load(data_file, cal_stem)
 
 # rearrange data to fit physical world
-imgs['az'] = 360 - imgs['az']  # empirical
-assert imgs['0428'].shape == (1, 512, 512)
-for k in ['az', 'el'] + imgs['wavelengths'].tolist():
+imgs["az"] = 360 - imgs["az"]  # empirical
+assert imgs["0428"].shape == (1, 512, 512)
+for k in ["az", "el"] + imgs["wavelengths"].tolist():
     if imgs[k].ndim == 2:
         imgs[k] = imgs[k].transpose(1, 0)  # empirical
     else:
-        imgs[k] = imgs[k].transpose('time', 'x', 'y')  # empirical
+        imgs[k] = imgs[k].transpose("time", "x", "y")  # empirical
 
 dup.image_azel(imgs, cal_stem.name, data_file.name)
 
