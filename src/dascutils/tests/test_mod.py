@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from pathlib import Path
 import xarray
 import pytest
@@ -77,7 +76,3 @@ def test_read_write_hdf5(tmp_path):
             assert v.equals(ref[k])
         else:
             assert v == ref[k]
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

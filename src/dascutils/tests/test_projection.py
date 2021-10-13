@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from pathlib import Path
 import dascutils as du
 import pytest
@@ -23,9 +22,5 @@ def test_projection(wavelen, refalt, reflat, reflon):
 
     assert data[wavelen].mapping_alt_km == approx(refalt)
 
-    assert data[wavelen].lat[266, 247] == approx(reflat)
-    assert data[wavelen].lon[266, 247] == approx(reflon)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    assert data[wavelen].lat[266, 247] == approx(reflat, rel=1e-3)
+    assert data[wavelen].lon[266, 247] == approx(reflon, rel=1e-3)

@@ -43,7 +43,3 @@ def test_script():
         )
     except subprocess.CalledProcessError as e:
         pytest.skip(f"Bad internet connection?   {e}")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
