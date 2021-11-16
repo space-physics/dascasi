@@ -5,6 +5,8 @@ on:
     paths:
     - "**/*.py"
     - ".github/workflows/ci.yml"
+  pull-request:
+
 
 jobs:
 

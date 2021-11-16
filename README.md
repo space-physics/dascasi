@@ -2,8 +2,6 @@
 
 [![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
 ![ci](https://github.com/space-physics/dascutils/workflows/ci/badge.svg)
-![CodeQL](https://github.com/space-physics/dascutils/workflows/CodeQL/badge.svg)
-[![PyPi versions](https://img.shields.io/pypi/pyversions/dascutils.svg)](https://pypi.python.org/pypi/dascutils)
 [![PyPi Download stats](http://pepy.tech/badge/dascutils)](http://pepy.tech/project/dascutils)
 
 Utilities for plotting, saving, analyzing the Poker Flat Research Range Digital All Sky Camera. (Other locations, too).
