@@ -11,7 +11,7 @@ from dateutil.parser import parse
 import numpy as np
 
 
-def get_time_slice(time: list[datetime] | np.ndarray, treq: list[datetime]) -> slice:
+def get_time_slice(time, treq: list[datetime]) -> slice:
     """
     given the times in a data stack and the requested time(s),
     return a slice for indexing the data stack

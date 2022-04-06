@@ -67,7 +67,7 @@ def _sift(flist: list[Path]) -> dict[str, xarray.DataArray]:
 
     time = []
     files = []  # to only keep filesnames for "good" files
-    img: list[np.ndarray] = []
+    img = []
     wavelen: list[str] = []
 
     warnings.filterwarnings("ignore", category=VerifyWarning)
@@ -124,7 +124,7 @@ def _project(
 
 
 def _collect(
-    files: list[Path], img: list[np.ndarray], time: list[datetime], wavelen: list[str]
+    files: list[Path], img: list, time: list[datetime], wavelen: list[str]
 ) -> dict[str, xarray.DataArray]:
     """assemble image stack into dict of xarray.DataArray"""
     img = np.array(img)
@@ -146,7 +146,7 @@ def _collect(
     return imgs
 
 
-def _loadimg(fn: Path) -> tuple[np.ndarray, datetime, str]:
+def _loadimg(fn: Path) -> tuple[T.Any, datetime, str]:
     """
     DASC iKon cameras are/were 14-bit at least through 2015. So what they did was
     just write unsigned 14-bit data into signed 16-bit integers, which doesn't overflow
@@ -264,7 +264,7 @@ def _azel(azelfn: Path, data: dict[str, T.Any]) -> dict[str, T.Any]:
     return data
 
 
-def loadcal(azelfn: Path) -> dict[str, np.ndarray]:
+def loadcal(azelfn: Path) -> dict[str, T.Any]:
     """Load DASC plate scale (degrees/pixel)"""
     if isinstance(azelfn, (str, Path)):
         azfn, elfn = stem2fn(azelfn)

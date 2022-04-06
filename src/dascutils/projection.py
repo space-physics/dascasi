@@ -11,7 +11,7 @@ from scipy.spatial import Delaunay
 from scipy.interpolate import griddata
 
 
-def interpolateCoordinate(x: np.ndarray, N: int = 512, method: str = "linear") -> np.ndarray:
+def interpolateCoordinate(x, N: int = 512, method: str = "linear"):
 
     x0, y0 = np.meshgrid(np.arange(x.shape[0]), np.arange(x.shape[1]))
     mask = np.ma.masked_invalid(x)
@@ -23,9 +23,7 @@ def interpolateCoordinate(x: np.ndarray, N: int = 512, method: str = "linear") -
     return z
 
 
-def interpSpeedUp(
-    x_in: np.ndarray, y_in: np.ndarray, image: np.ndarray, N: int = 512, verbose: bool = True
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def interpSpeedUp(x_in, y_in, image, N: int = 512, verbose: bool = True) -> tuple:
     """
     The speedup is based on the scipy.interpolate.griddata algorithm. Thorough
     explanation is on the stackoverflow
@@ -37,7 +35,7 @@ def interpSpeedUp(
         ret[np.any(wts < 0, axis=1)] = fill_value
         return ret
 
-    def _interpWeights(xyz: np.ndarray, uvw: np.ndarray, d: int = 2):
+    def _interpWeights(xyz, uvw, d: int = 2):
         tri = Delaunay(xyz)
         simplex = tri.find_simplex(uvw)
         vertices = np.take(tri.simplices, simplex, axis=0)
