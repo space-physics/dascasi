@@ -208,8 +208,8 @@ def _slicereq(fin: Path, treq: list[datetime], wavelenreq: list[str] = None) -> 
     wavelen = wavelen[i]
     # %% wavelength slice
     if wavelenreq is not None:
-        i = np.isin(wavelen, wavelenreq)
-        flist = np.asarray(flist)[i].tolist()
+        j = np.isin(wavelen, wavelenreq)
+        flist = np.asarray(flist)[j].tolist()
 
     return flist
 
