@@ -19,7 +19,13 @@ from .utils import time_bounds
 HOST = "ftp://optics.gi.alaska.edu"
 
 
-def download(startend: tuple[datetime, datetime], site: str, odir: Path, host: str = None, wavelen: str = None) -> list[Path]:
+def download(
+    startend: tuple[datetime, datetime],
+    site: str,
+    odir: Path,
+    host: str = None,
+    wavelen: str = None,
+) -> list[Path]:
     """
     startend: tuple of datetime
     """
@@ -63,7 +69,9 @@ def download(startend: tuple[datetime, datetime], site: str, odir: Path, host: s
         F.cwd(ydir)
         dlist = F.nlst()
         if rday not in dlist:
-            raise ValueError(f"{rday} does not exist under {host}/{rparent}/{ydir}. Available: {dlist}")
+            raise ValueError(
+                f"{rday} does not exist under {host}/{rparent}/{ydir}. Available: {dlist}"
+            )
 
         print("downloading to", odir)
         F.cwd(rday)

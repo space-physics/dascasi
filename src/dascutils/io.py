@@ -87,7 +87,9 @@ def _sift(flist: list[Path]) -> dict[str, xarray.DataArray]:
     return _collect(files, img, time, wavelen)
 
 
-def _project(imgs: dict[str, xarray.DataArray], wavelength_altitude_km: dict[str, float]) -> dict[str, xarray.DataArray]:
+def _project(
+    imgs: dict[str, xarray.DataArray], wavelength_altitude_km: dict[str, float]
+) -> dict[str, xarray.DataArray]:
     """project image stack to specified per-wavelength altitudes"""
 
     if wavelength_altitude_km is None:
@@ -99,9 +101,18 @@ def _project(imgs: dict[str, xarray.DataArray], wavelength_altitude_km: dict[str
     for wl, mapalt_km in wavelength_altitude_km.items():
         if wl not in imgs:
             continue
-        lat, lon, _ = pm.aer2geodetic(azi, eli, mapalt_km * 1e3 / np.sin(np.radians(eli)), imgs["lat0"], imgs["lon0"], imgs["alt0"])
+        lat, lon, _ = pm.aer2geodetic(
+            azi,
+            eli,
+            mapalt_km * 1e3 / np.sin(np.radians(eli)),
+            imgs["lat0"],
+            imgs["lon0"],
+            imgs["alt0"],
+        )
 
-        mapped_lon, mapped_lat, mapped_img = interpSpeedUp(x_in=lon, y_in=lat, image=imgs[wl].values)
+        mapped_lon, mapped_lat, mapped_img = interpSpeedUp(
+            x_in=lon, y_in=lat, image=imgs[wl].values
+        )
         imgs[wl].data = mapped_img
 
         # lat, lon cannot be dimensions here because they're each dynamic in 2-D
@@ -112,7 +123,9 @@ def _project(imgs: dict[str, xarray.DataArray], wavelength_altitude_km: dict[str
     return imgs
 
 
-def _collect(files: list[Path], img: list[np.ndarray], time: list[datetime], wavelen: list[str]) -> dict[str, xarray.DataArray]:
+def _collect(
+    files: list[Path], img: list[np.ndarray], time: list[datetime], wavelen: list[str]
+) -> dict[str, xarray.DataArray]:
     """assemble image stack into dict of xarray.DataArray"""
     img = np.array(img)
     time = np.array(time)
@@ -234,7 +247,9 @@ def _azel(azelfn: Path, data: dict[str, T.Any]) -> dict[str, T.Any]:
             raise ImportError("pip install scikit-image")
 
         if downscale != 1:
-            log.warning(f"downsizing images by factors of {downscale[1:]} to match calibration data")
+            log.warning(
+                f"downsizing images by factors of {downscale[1:]} to match calibration data"
+            )
 
         if len(wavelen) == 1 and wavelen[0] == "0000":
             if downscale != 1:

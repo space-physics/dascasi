@@ -49,7 +49,9 @@ def test_timerange_and_wavelength():
 def test_singletime(wavelength, L):
     data = du.load(R / "data", treq="2012-01-03T08:32:02")
     assert data[wavelength].shape == (L, 512, 512)
-    assert data[wavelength].time.values.astype("datetime64[us]").astype(datetime) == datetime(2015, 10, 7, 8, 23, 51, 743000)
+    assert data[wavelength].time.values.astype("datetime64[us]").astype(datetime) == datetime(
+        2015, 10, 7, 8, 23, 51, 743000
+    )
 
 
 @pytest.mark.parametrize("wavelength, L", [("0428", 1), ("0558", 2), ("0630", 1)])

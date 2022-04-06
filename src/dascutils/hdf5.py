@@ -47,7 +47,9 @@ def save_hdf5(imgs: dict[str, T.Any], outfile: Path):
                 f[f"/{wl}/lon"] = imgs[wl].lon
 
 
-def load_hdf5(filename: Path, treq: list[datetime] = None, wavelenreq: list[str] = None) -> dict[str, T.Any]:
+def load_hdf5(
+    filename: Path, treq: list[datetime] = None, wavelenreq: list[str] = None
+) -> dict[str, T.Any]:
 
     imgs = {}
 
@@ -67,7 +69,11 @@ def load_hdf5(filename: Path, treq: list[datetime] = None, wavelenreq: list[str]
             imgs[wl] = xarray.DataArray(
                 data=h[f"/{wl}/imgs"][i, ...],
                 name=wl,
-                coords={"time": time[i], "y": range(h[f"/{wl}/imgs"].shape[1]), "x": range(h[f"/{wl}/imgs"].shape[2])},
+                coords={
+                    "time": time[i],
+                    "y": range(h[f"/{wl}/imgs"].shape[1]),
+                    "x": range(h[f"/{wl}/imgs"].shape[2]),
+                },
                 dims=["time", "y", "x"],
             )
 

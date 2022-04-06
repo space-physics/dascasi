@@ -36,7 +36,9 @@ def image_azel(dat: xarray.DataArray, cal_stem: str, name: str = ""):
 
             ax.set_xlabel("x pixel")
             ax.set_ylabel("y pixel")
-            ax.set_title(f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f}) \nAzimuth / Elevation  {name}")
+            ax.set_title(
+                f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f}) \nAzimuth / Elevation  {name}"
+            )
 
 
 def pcolor_azel(dat: xarray.DataArray, cal_stem: Path):
@@ -93,7 +95,9 @@ def plot_projected_image(imgs: xarray.DataArray):
         else:
             ax = fg.gca(projection=cartopy.crs.PlateCarree())
             ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5, linestyle=":")
-            hgl = ax.gridlines(crs=cartopy.crs.PlateCarree(), color="gray", linestyle="--", linewidth=0.5)
+            hgl = ax.gridlines(
+                crs=cartopy.crs.PlateCarree(), color="gray", linestyle="--", linewidth=0.5
+            )
             hgl.xlabels_bottom = True
             hgl.ylabels_left = True
             hgl.xformatter = LONGITUDE_FORMATTER
@@ -101,7 +105,11 @@ def plot_projected_image(imgs: xarray.DataArray):
             hgl.xlocator = mt.FixedLocator(range(-180, -110, 10))
             hgl.ylocator = mt.FixedLocator(range(55, 85, 5))
         ax.pcolormesh(imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, "Grays"))
-        ax.set_title(f"{str(img.time.values)[:-10]}: {imgs.name} " r"$\AA$" f" at {imgs.mapping_alt_km} km altitude")
+        ax.set_title(
+            f"{str(img.time.values)[:-10]}: {imgs.name} "
+            r"$\AA$"
+            f" at {imgs.mapping_alt_km} km altitude"
+        )
         ax.set_xlabel("geographic longitude")
         ax.set_ylabel("geographic latitude")
 
@@ -143,13 +151,19 @@ def moviedasc(imgs: dict[str, typing.Any], outdir: Path, cadence: float, rows=No
     if "0000" not in wavlen:
         Hi = []
         Ht = []
-        for ax, w, mm, c in zip(axs, wavlen, ((350, 800), (350, 9000), (350, 900)), ("b", "g", "r")):
+        for ax, w, mm, c in zip(
+            axs, wavlen, ((350, 800), (350, 9000), (350, 900)), ("b", "g", "r")
+        ):
             # ax.axis('off') #this also removes xlabel,ylabel
             ax.set_xticks([])
             ax.set_yticks([])
             ax.set_xlabel(f"{w} nm", color=c)
 
-            Hi.append(ax.imshow(imgs[w][0], vmin=mm[0], vmax=mm[1], origin="lower", norm=LogNorm(), cmap="gray"))
+            Hi.append(
+                ax.imshow(
+                    imgs[w][0], vmin=mm[0], vmax=mm[1], origin="lower", norm=LogNorm(), cmap="gray"
+                )
+            )
 
             Ht.append(ax.set_title("", color=c))
             # fg.colorbar(hi[-1],ax=a).set_label('14-bit data numbers')
@@ -161,14 +175,20 @@ def moviedasc(imgs: dict[str, typing.Any], outdir: Path, cadence: float, rows=No
         ax = axs[0]
         ax.set_xticks([])
         ax.set_yticks([])
-        hi = ax.imshow(imgs["0000"][0], vmin=(350, 10000), origin="lower", norm=LogNorm(), cmap="gray")
+        hi = ax.imshow(
+            imgs["0000"][0], vmin=(350, 10000), origin="lower", norm=LogNorm(), cmap="gray"
+        )
 
         ht = ax.set_title("")
         if themisplot is not None:
             themisplot.overlayrowcol(ax, rows, cols)
     # %% loop
     t = min([imgs[wl]["time"][0] for wl in wavlen]).values.astype("datetime64[us]").astype(datetime)
-    t1 = max([imgs[wl]["time"][-1] for wl in wavlen]).values.astype("datetime64[us]").astype(datetime)
+    t1 = (
+        max([imgs[wl]["time"][-1] for wl in wavlen])
+        .values.astype("datetime64[us]")
+        .astype(datetime)
+    )
     dt = timedelta(seconds=cadence)
 
     while t <= t1:

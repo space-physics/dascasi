@@ -56,7 +56,7 @@ Now we give several examples.
 Download Poker Flat Research Range "PKR" October 7, 2015 from 8:23 to 8:54 UTC to `~/data/`:
 
 ```sh
-dascasi_download PKR 2015-10-07T08:23 2015-10-07T08:54 ~/data
+python -m dascutils.download PKR 2015-10-07T08:23 2015-10-07T08:54 ~/data
 ```
 
 * `-w` four-letter wavelength in nanometers e.g. 0630
@@ -82,7 +82,7 @@ python scripts/ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07.h
 Play movie of all wavelengths in subplots for files in a directory, for example:
 
 ```sh
-dascasi_movie dascutils/tests/
+python -m dascutils.movie dascutils/tests/
 ```
 
 additional options include:

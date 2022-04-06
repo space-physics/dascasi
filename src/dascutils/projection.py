@@ -55,7 +55,10 @@ def interpSpeedUp(
         raise ValueError("expected image or image stack")
     mask = np.ma.masked_invalid(provisional_image)
     # Make new grids constraint by input longitude/latitude boundaries and resolution N
-    xgrid, ygrid = np.meshgrid(np.linspace(np.nanmin(x_in), np.nanmax(x_in), N), np.linspace(np.nanmin(y_in), np.nanmax(y_in), N))
+    xgrid, ygrid = np.meshgrid(
+        np.linspace(np.nanmin(x_in), np.nanmax(x_in), N),
+        np.linspace(np.nanmin(y_in), np.nanmax(y_in), N),
+    )
     # Old Coordinates maked -> flattern to a 1D array
     x = x_in[~mask.mask]
     y = y_in[~mask.mask]
