@@ -1,11 +1,10 @@
 from .io import load
 
-import xarray
 from pathlib import Path
 from argparse import ArgumentParser
 
 
-def _plotdasc(img: xarray.Dataset, outdir: Path, cadence: float):
+def _plotdasc(img, outdir: Path, cadence: float):
     from .plots import histogram_dasc, moviedasc
 
     histogram_dasc(img, outdir)

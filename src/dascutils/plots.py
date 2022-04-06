@@ -104,7 +104,9 @@ def plot_projected_image(imgs: xarray.DataArray):
             hgl.yformatter = LATITUDE_FORMATTER
             hgl.xlocator = mt.FixedLocator(range(-180, -110, 10))
             hgl.ylocator = mt.FixedLocator(range(55, 85, 5))
-        ax.pcolormesh(imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, "Grays"))
+
+        ax.pcolormesh(imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, "Grays"))  # type: ignore
+
         ax.set_title(
             f"{str(img.time.values)[:-10]}: {imgs.name} "
             r"$\AA$"
