@@ -5,7 +5,7 @@ import numpy as np
 from pytest import approx
 from datetime import datetime
 
-import dascutils as du
+import dascasi as du
 
 R = Path(__file__).parent
 

@@ -4,8 +4,8 @@ Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS fil
 
 This program by default projects HiST auroral tomography system FOV onto PFRR DASC.
 """
-import dascutils.io as dio
-import dascutils.plots as dup
+import dascasi.io as dio
+import dascasi.plots as dup
 from argparse import ArgumentParser
 
 from themisasi.fov import mergefov

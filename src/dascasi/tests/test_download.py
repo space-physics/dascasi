@@ -1,5 +1,5 @@
 import pytest
-import dascutils as du
+import dascasi as du
 import socket
 import ftplib
 from pathlib import Path

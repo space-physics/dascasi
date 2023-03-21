@@ -28,7 +28,7 @@ except ImportError:
     downscale_local_mean = None
 
 
-log = logging.getLogger("DASCutils-io")
+log = logging.getLogger("dascasi-io")
 
 
 def load(
@@ -123,25 +123,24 @@ def _project(
     return imgs
 
 
-def _collect(
-    files: list[Path], img: list, time: list[datetime], wavelen: list[str]
-) -> dict[str, xarray.DataArray]:
+def _collect(files: list[Path], img, time: list[datetime], wavelen: list[str]) -> dict[str, T.Any]:
     """assemble image stack into dict of xarray.DataArray"""
-    img = np.array(img)
-    time = np.array(time)
-    wavelen = np.array(wavelen)
-    files = np.asarray(files)  # for boolean indexing
 
-    imgs = {"wavelengths": np.unique(wavelen)}
+    afiles = np.asarray(files)  # for boolean indexing
+    aimg = np.array(img)
+    atime = np.array(time)
+    wl = np.array(wavelen)
+
+    imgs: dict[str, T.Any] = {"wavelengths": np.unique(wl)}
     for w in imgs["wavelengths"]:
-        i = wavelen == w
+        i = wl == w
         imgs[w] = xarray.DataArray(
-            data=img[i, ...],
+            data=aimg[i, ...],
             name=w,
-            coords={"time": time[i], "y": range(img.shape[1]), "x": range(img.shape[2])},
+            coords={"time": atime[i], "y": range(aimg.shape[1]), "x": range(aimg.shape[2])},
             dims=["time", "y", "x"],
         )
-        imgs[w].attrs["filename"] = [p.name for p in files[i]]
+        imgs[w].attrs["filename"] = [p.name for p in afiles[i]]
 
     return imgs
 
@@ -265,7 +264,9 @@ def _azel(azelfn: Path, data: dict[str, T.Any]) -> dict[str, T.Any]:
 
 
 def loadcal(azelfn: Path) -> dict[str, T.Any]:
-    """Load DASC plate scale (degrees/pixel)"""
+    """Load DASC plate scale (degrees/pixel)
+    """
+
     if isinstance(azelfn, (str, Path)):
         azfn, elfn = stem2fn(azelfn)
     elif len(azelfn) == 1:
@@ -293,13 +294,13 @@ def loadcal(azelfn: Path) -> dict[str, T.Any]:
     assert np.nanmax(el) <= 90 and np.nanmin(el) >= 0, "0 < elevation < 90 degrees."
     assert np.nanmax(az) <= 360 and np.nanmin(az) >= 0, "0 < azimuth < 360 degrees."
 
-    azel = {"el": el, "az": az}
-
-    return azel
+    return {"el": el, "az": az}
 
 
 def gettime(fn: Path) -> datetime:
-    """returns time of DASC frame in file (assumes one frame per file)"""
+    """returns time of DASC frame in file (assumes one frame per file)
+    """
+
     with fits.open(fn, mode="readonly") as h:
         try:
             t = parse(h[0].header["OBSDATE"] + "T" + h[0].header["OBSSTART"])

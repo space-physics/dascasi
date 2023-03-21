@@ -8,8 +8,8 @@ for simplicity, hard-coded to test data, but can be used for any data.
 from pathlib import Path
 from matplotlib.pyplot import show
 
-import dascutils as du
-import dascutils.plots as dup
+import dascasi as du
+import dascasi.plots as dup
 
 R = Path(du.__file__).parent
 data_dir = R / "tests/data/"

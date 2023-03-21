@@ -1,17 +1,17 @@
 # DASC all-sky camera utilities
 
 [![image](https://zenodo.org/badge/51016067.svg)](https://zenodo.org/badge/latestdoi/51016067)
-![ci](https://github.com/space-physics/dascutils/workflows/ci/badge.svg)
-[![PyPi Download stats](http://pepy.tech/badge/dascutils)](http://pepy.tech/project/dascutils)
+![ci](https://github.com/space-physics/dascasi/workflows/ci/badge.svg)
+[![PyPi Download stats](http://pepy.tech/badge/dascasi)](http://pepy.tech/project/dascasi)
 
 Utilities for plotting, saving, analyzing the Poker Flat Research Range Digital All Sky Camera. (Other locations, too).
 This program handles the corrupted FITS files due to the RAID array failure on 2013 data.
 The raw data FITS contain one image per file.
 
-![DASC projected images](./src/dascutils/tests/data/dasc_projection_plot_pc.png)
+![DASC projected images](./src/dascasi/tests/data/dasc_projection_plot_pc.png)
 (using scripts/PlotProjectedImage.py
 )
-![DASC az/el PKR](./src/dascutils/tests/data/dasc_azel.png)
+![DASC az/el PKR](./src/dascasi/tests/data/dasc_azel.png)
 (using scripts/PlotAzimuthElevation.py)
 
 
@@ -22,7 +22,7 @@ Most people will find it useful to have the example scripts and the tests built 
 ```sh
 git clone https://github.com/space-physics/dascasi
 
-pip install -e dascutils
+pip install -e dascasi
 ```
 
 ## Usage
@@ -30,7 +30,7 @@ pip install -e dascutils
 To use the API directly, like:
 
 ```python
-import dascutils as du
+import dascasi as du
 
 data = du.load('tests/PKR_DASC_0558_20151007_082351.743.FITS')
 ```
@@ -56,7 +56,7 @@ Now we give several examples.
 Download Poker Flat Research Range "PKR" October 7, 2015 from 8:23 to 8:54 UTC to `~/data/`:
 
 ```sh
-python -m dascutils.download PKR 2015-10-07T08:23 2015-10-07T08:54 ~/data
+python -m dascasi.download PKR 2015-10-07T08:23 2015-10-07T08:54 ~/data
 ```
 
 * `-w` four-letter wavelength in nanometers e.g. 0630
@@ -82,7 +82,7 @@ python scripts/ConvertDASC_FITS_to_HDF5.py ~/data/2015-10-07 ~/data/2015-10-07.h
 Play movie of all wavelengths in subplots for files in a directory, for example:
 
 ```sh
-python -m dascutils.movie dascutils/tests/
+python -m dascasi.movie dascasi/tests/
 ```
 
 additional options include:
@@ -96,9 +96,9 @@ To match data from DASC with other instruments, it is vital that the plate scale
 Calibration data may be [downloaded](ftp://optics.gi.alaska.edu/Cal_data/), for other times / instruments please contact UAF-GI.
 
 ```python
-import dascutils as du
+import dascasi as du
 
-data = du.load('dascutils/tests/', azelfn='/path/to/your_calibration_file')
+data = du.load('dascasi/tests/', azelfn='/path/to/your_calibration_file')
 ```
 
 now `data` includes data variables `az` and `el`, same shape as the image(s), along with camera position in `lat` `lon` `alt_m`.

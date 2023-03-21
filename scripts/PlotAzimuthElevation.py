@@ -9,8 +9,8 @@ The stem is the common part of the fullpath to these files.
 """
 
 from pathlib import Path
-import dascutils as du
-import dascutils.plots as dup
+import dascasi as du
+import dascasi.plots as dup
 from matplotlib.pyplot import show
 
 R = Path(du.__file__).parent

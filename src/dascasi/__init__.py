@@ -1,4 +1,4 @@
-#  Copyright 2020 Michael Hirsch
+#  Copyright 2023 SciVision, Inc.
 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,6 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+__version__ = "3.0.0"
+
 from .web import download
 from .io import load, loadcal
 from .hdf5 import save_hdf5
+
+__all__ = ["download", "load", "loadcal", "save_hdf5"]

@@ -5,7 +5,6 @@ Created on Fri Sep 28 11:43:24 2018
 """
 
 from __future__ import annotations
-import xarray
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import numpy as np
@@ -59,7 +58,7 @@ def time_bounds(startend: tuple[datetime, datetime]) -> tuple[datetime, datetime
     return start, end
 
 
-def getDASCimage(D: xarray.DataArray, ix: datetime | int = None, coordinate: str = "wsg"):
+def getDASCimage(D, ix: datetime | int = None, coordinate: str = "wsg"):
     assert isinstance(ix, (datetime, int))
     # Find the closest image for the given timestamp
     if isinstance(ix, datetime):

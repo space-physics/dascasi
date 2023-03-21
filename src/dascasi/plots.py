@@ -21,7 +21,7 @@ except ImportError:
     themisplot = None
 
 
-def image_azel(dat: xarray.DataArray, cal_stem: str, name: str = ""):
+def image_azel(dat, cal_stem: str, name: str = ""):
     """plot DASC image with az/el contour overlay"""
 
     for k in dat["wavelengths"]:
@@ -41,7 +41,7 @@ def image_azel(dat: xarray.DataArray, cal_stem: str, name: str = ""):
             )
 
 
-def pcolor_azel(dat: xarray.DataArray, cal_stem: Path):
+def pcolor_azel(dat, cal_stem: Path):
     """plots az/el as pcolor with contour overlay"""
 
     fg = figure(figsize=(12, 5))
@@ -64,7 +64,7 @@ def pcolor_azel(dat: xarray.DataArray, cal_stem: Path):
     fg.suptitle(f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f})")
 
 
-def contour_azel(dat: xarray.DataArray, cal_stem: Path):
+def contour_azel(dat, cal_stem: Path):
     fg = figure()
     ax = fg.gca()
 
@@ -77,7 +77,7 @@ def contour_azel(dat: xarray.DataArray, cal_stem: Path):
     ax.set_title(f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f}) \nAzimuth / Elevation")
 
 
-def plot_projected_image(imgs: xarray.DataArray):
+def plot_projected_image(imgs):
     """
     plots a projected image at an altitude (lat, lon)
 

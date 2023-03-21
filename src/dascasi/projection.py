@@ -85,6 +85,7 @@ def interpSpeedUp(x_in, y_in, image, N: int = 512, verbose: bool = True) -> tupl
     else:
         Zim = _interpolate(image, vtx, wts).reshape(N, N)
     if verbose:
-        print("Interpolation done in {} seconds".format((datetime.now() - t0).total_seconds()))
+        print(f"Interpolation done in {(datetime.now() - t0).total_seconds()} seconds")
     # Return grids and interp points with associative weights
+
     return xgrid, ygrid, Zim

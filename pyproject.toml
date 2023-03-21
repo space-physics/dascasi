@@ -1,9 +1,38 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dascasi"
+description = "UAF Digital All-Sky Camera: reading and plotting"
+keywords = ["aurora", "camera"]
+classifiers = ["Development Status :: 5 - Production/Stable",
+ "Environment :: Console",
+ "Intended Audience :: Science/Research",
+ "Operating System :: OS Independent",
+ "Programming Language :: Python :: 3",
+ "Topic :: Scientific/Engineering :: Atmospheric Science"
+]
+requires-python = ">=3.7"
+dynamic = ["version", "readme"]
+dependencies = ["python-dateutil", "numpy", "astropy", "xarray", "scipy", "pymap3d", "h5py"]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
+version = {attr = "dascasi.__version__"}
+
+[project.optional-dependencies]
+tests = ["pytest"]
+lint = ["flake8", "flake8-bugbear", "flake8-builtins", "flake8-blind-except", "mypy",
+  "types-python-dateutil", "types-requests"]
+full = ["cartopy", "scikit-image", "matplotlib", "themisasi"]
 
 [tool.black]
 line-length = 100
 
-[tool.pytest.ini_options]
-addopts = "-ra -v --ignore=test_download.py"
-filterwarnings = "ignore::DeprecationWarning"
+[tool.mypy]
+files = ["src", "scripts"]
+
+ignore_missing_imports = true
+strict_optional = false
+show_column_numbers = true

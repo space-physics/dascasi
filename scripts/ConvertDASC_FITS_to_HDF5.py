@@ -2,7 +2,7 @@
 """
 convert DASC FITS stack to HDF5
 """
-import dascutils as du
+import dascasi as du
 from pathlib import Path
 import argparse
 
