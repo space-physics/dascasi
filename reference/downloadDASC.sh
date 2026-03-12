@@ -19,4 +19,3 @@ esac
 wget -nc -nd -nH -r -np --no-check-certificate -A.FITS -A.FIT \
  --random-wait --wait 1 -e robots=off \
  ftp://optics.gi.alaska.edu/$site/$type/RAW/$year/$date
-

@@ -15,7 +15,7 @@
 __version__ = "3.0.0"
 
 from .web import download
-from .io import load, loadcal
+from .dio import load, loadcal
 from .hdf5 import save_hdf5
 
 __all__ = ["download", "load", "loadcal", "save_hdf5"]

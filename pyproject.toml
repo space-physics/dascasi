@@ -13,26 +13,23 @@ classifiers = ["Development Status :: 5 - Production/Stable",
  "Programming Language :: Python :: 3",
  "Topic :: Scientific/Engineering :: Atmospheric Science"
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 dynamic = ["version", "readme"]
-dependencies = ["python-dateutil", "numpy", "astropy", "xarray", "scipy", "pymap3d", "h5py"]
+dependencies = ["numpy", "astropy", "xarray", "scipy", "pymap3d", "h5py"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"], content-type = "text/markdown"}
 version = {attr = "dascasi.__version__"}
 
 [project.optional-dependencies]
-tests = ["pytest"]
-lint = ["flake8", "flake8-bugbear", "flake8-builtins", "flake8-blind-except", "mypy",
-  "types-python-dateutil", "types-requests"]
+tests = ["pytest", "mypy"]
 full = ["cartopy", "scikit-image", "matplotlib", "themisasi"]
 
 [tool.black]
 line-length = 100
 
 [tool.mypy]
-files = ["src", "scripts"]
-
+files = ["."]
 ignore_missing_imports = true
-strict_optional = false
-show_column_numbers = true
+install_types = true
+exclude = ["^build([/\\\\]|$)"]

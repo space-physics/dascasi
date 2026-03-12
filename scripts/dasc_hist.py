@@ -4,7 +4,8 @@ Plots / plays / converts to movie:  Poker Flat DASC all-sky camera data FITS fil
 
 This program by default projects HiST auroral tomography system FOV onto PFRR DASC.
 """
-import dascasi.io as dio
+
+import dascasi.dio as dio
 import dascasi.plots as dup
 from argparse import ArgumentParser
 
@@ -54,7 +55,10 @@ def main():
         default=["../histutils/cal/hst0cal.h5", "../histutils/cal/hst1cal.h5"],
     )
     p.add_argument(
-        "--projalt", help="altitude [METERS] to project common FOV at", type=float, default=110e3
+        "--projalt",
+        help="altitude [METERS] to project common FOV at",
+        type=float,
+        default=110e3,
     )
     p = p.parse_args()
 

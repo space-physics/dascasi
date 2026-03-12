@@ -1,11 +1,11 @@
-from __future__ import annotations
 from pathlib import Path
 import numpy as np
 import typing
 import logging
 from datetime import timedelta, datetime
 import xarray
-from matplotlib.pyplot import draw, pause, figure
+
+import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import matplotlib.ticker as mt
 
@@ -26,7 +26,7 @@ def image_azel(dat, cal_stem: str, name: str = ""):
 
     for k in dat["wavelengths"]:
         for im in dat[k]:
-            fg = figure()
+            fg = plt.figure()
             ax = fg.gca()
             ax.pcolormesh(im, cmap="Greys_r", norm=LogNorm())
             cs = ax.contour(dat["az"], colors="white", alpha=0.5)
@@ -44,7 +44,7 @@ def image_azel(dat, cal_stem: str, name: str = ""):
 def pcolor_azel(dat, cal_stem: Path):
     """plots az/el as pcolor with contour overlay"""
 
-    fg = figure(figsize=(12, 5))
+    fg = plt.figure(figsize=(12, 5))
     axs = fg.subplots(1, 2, sharey=True, sharex=True)
 
     ax = axs[0]
@@ -65,7 +65,7 @@ def pcolor_azel(dat, cal_stem: Path):
 
 
 def contour_azel(dat, cal_stem: Path):
-    fg = figure()
+    fg = plt.figure()
     ax = fg.gca()
 
     for k, c in zip(("az", "el"), ("red", "indigo")):
@@ -74,7 +74,9 @@ def contour_azel(dat, cal_stem: Path):
 
     ax.set_xlabel("x pixel")
     ax.set_ylabel("y pixel")
-    ax.set_title(f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f}) \nAzimuth / Elevation")
+    ax.set_title(
+        f"{cal_stem} ({dat['lat0']:.2f}, {dat['lon0']:.2f}) \nAzimuth / Elevation"
+    )
 
 
 def plot_projected_image(imgs):
@@ -89,14 +91,17 @@ def plot_projected_image(imgs):
     cmap = {"0428": "Blues", "0558": "Greens", "0630": "Reds"}
 
     for img in imgs:
-        fg = figure()
+        fg = plt.figure()
         if cartopy is None:
             ax = fg.gca()
         else:
             ax = fg.gca(projection=cartopy.crs.PlateCarree())
             ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5, linestyle=":")
             hgl = ax.gridlines(
-                crs=cartopy.crs.PlateCarree(), color="gray", linestyle="--", linewidth=0.5
+                crs=cartopy.crs.PlateCarree(),
+                color="gray",
+                linestyle="--",
+                linewidth=0.5,
             )
             hgl.xlabels_bottom = True
             hgl.ylabels_left = True
@@ -105,7 +110,9 @@ def plot_projected_image(imgs):
             hgl.xlocator = mt.FixedLocator(range(-180, -110, 10))
             hgl.ylocator = mt.FixedLocator(range(55, 85, 5))
 
-        ax.pcolormesh(imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, "Grays"))  # type: ignore
+        ax.pcolormesh(
+            imgs.lon, imgs.lat, imgs[0].values, cmap=cmap.get(imgs.name, "Grays")
+        )  # type: ignore
 
         ax.set_title(
             f"{str(img.time.values)[:-10]}: {imgs.name} "
@@ -126,7 +133,7 @@ def histogram_dasc(imgs: dict[str, typing.Any], outdir=None):
     the entries in list img correspond to wavelength, a 1-D array
     """
 
-    fg = figure(figsize=(15, 5))
+    fg = plt.figure(figsize=(15, 5))
     axs = fg.subplots(1, 3)
     for a, i in zip(axs, imgs["wavelengths"]):
         a.hist(imgs[i].values.ravel(), bins=128)
@@ -141,11 +148,13 @@ def histogram_dasc(imgs: dict[str, typing.Any], outdir=None):
         fg.savefig(ofn, bbox_inches="tight")
 
 
-def moviedasc(imgs: dict[str, typing.Any], outdir: Path, cadence: float, rows=None, cols=None):
+def moviedasc(
+    imgs: dict[str, typing.Any], outdir: Path, cadence: float, rows=None, cols=None
+):
 
     wavlen = imgs["wavelengths"]
 
-    fg = figure(figsize=(15, 5))
+    fg = plt.figure(figsize=(15, 5))
 
     axs = np.atleast_1d(fg.subplots(1, len(wavlen)))
 
@@ -163,7 +172,12 @@ def moviedasc(imgs: dict[str, typing.Any], outdir: Path, cadence: float, rows=No
 
             Hi.append(
                 ax.imshow(
-                    imgs[w][0], vmin=mm[0], vmax=mm[1], origin="lower", norm=LogNorm(), cmap="gray"
+                    imgs[w][0],
+                    vmin=mm[0],
+                    vmax=mm[1],
+                    origin="lower",
+                    norm=LogNorm(),
+                    cmap="gray",
                 )
             )
 
@@ -178,14 +192,22 @@ def moviedasc(imgs: dict[str, typing.Any], outdir: Path, cadence: float, rows=No
         ax.set_xticks([])
         ax.set_yticks([])
         hi = ax.imshow(
-            imgs["0000"][0], vmin=(350, 10000), origin="lower", norm=LogNorm(), cmap="gray"
+            imgs["0000"][0],
+            vmin=(350, 10000),
+            origin="lower",
+            norm=LogNorm(),
+            cmap="gray",
         )
 
         ht = ax.set_title("")
         if themisplot is not None:
             themisplot.overlayrowcol(ax, rows, cols)
     # %% loop
-    t = min([imgs[wl]["time"][0] for wl in wavlen]).values.astype("datetime64[us]").astype(datetime)
+    t = (
+        min([imgs[wl]["time"][0] for wl in wavlen])
+        .values.astype("datetime64[us]")
+        .astype(datetime)
+    )
     t1 = (
         max([imgs[wl]["time"][-1] for wl in wavlen])
         .values.astype("datetime64[us]")
@@ -202,7 +224,9 @@ def moviedasc(imgs: dict[str, typing.Any], outdir: Path, cadence: float, rows=No
             im = imgs["0000"].sel(time=t, method="nearest")
             _update_panel(im, hi, ht)
 
-        draw(), pause(0.05)  # the pause avoids random crashes
+        plt.draw()
+        plt.pause(0.05)
+        # the pause avoids random crashes
 
         if outdir:
             outdir = Path(outdir).expanduser()

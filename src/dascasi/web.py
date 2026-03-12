@@ -23,8 +23,8 @@ def download(
     startend: tuple[datetime, datetime],
     site: str,
     odir: Path,
-    host: str = None,
-    wavelen: str = None,
+    host: str | None = None,
+    wavelen: str | None = None,
 ) -> list[Path]:
     """
     startend: tuple of datetime
@@ -106,7 +106,9 @@ def skip_exist(filename: Path, F) -> bool:
     return False
 
 
-def get_filenames(days: list[str], wavelen: str, start: datetime, end: datetime) -> T.Iterator[str]:
+def get_filenames(
+    days: list[str], wavelen: str | None, start: datetime, end: datetime
+) -> T.Iterator[str]:
 
     print(f"searching {len(days)} remote files")
 

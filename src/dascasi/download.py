@@ -14,7 +14,9 @@ def dascasi_download():
     p = argparse.ArgumentParser(description="download DASC all-sky camera data")
     p.add_argument("site", choices=["EAA", "FYU", "KAK", "PKR", "TOO", "VEE"])
     p.add_argument(
-        "startend", help="start/end times UTC e.g. 2012-11-03T06:23 2012-11-03T07", nargs=2
+        "startend",
+        help="start/end times UTC e.g. 2012-11-03T06:23 2012-11-03T07",
+        nargs=2,
     )
     p.add_argument("odir", help="directory to write downloaded FITS to")
     p.add_argument("-w", "--wavelen", help="request specific wavelength(s)", nargs="+")

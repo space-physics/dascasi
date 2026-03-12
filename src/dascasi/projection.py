@@ -8,7 +8,7 @@ from __future__ import annotations
 import numpy as np
 from datetime import datetime
 from scipy.spatial import Delaunay
-from scipy.interpolate import griddata
+import scipy.interpolate
 
 
 def interpolateCoordinate(x, N: int = 512, method: str = "linear"):
@@ -19,7 +19,7 @@ def interpolateCoordinate(x, N: int = 512, method: str = "linear"):
     y0 = y0[~mask.mask]
     X = x[~mask.mask]
     x1, y1 = np.meshgrid(np.arange(N), np.arange(N))
-    z = griddata((x0, y0), X.ravel(), (x1, y1), method=method)
+    z = scipy.interpolate.griddata((x0, y0), X.ravel(), (x1, y1), method=method)  # type: ignore[call-overload]
     return z
 
 

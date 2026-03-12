@@ -1,4 +1,4 @@
-from .io import load
+from .dio import load
 
 from pathlib import Path
 from argparse import ArgumentParser

@@ -17,7 +17,7 @@ def save_hdf5(imgs: dict[str, T.Any], outfile: Path):
     print("writing image stack to", outfile)
 
     with h5py.File(outfile, "w") as f:
-        f["wavelengths"] = imgs["wavelengths"].astype(np.string_)
+        f["wavelengths"] = imgs["wavelengths"].astype(np.bytes_)
         for p in ["alt0", "lat0", "lon0", "az", "el"]:
             if p in imgs:
                 f[f"/camera/{p}"] = imgs[p]
@@ -34,13 +34,13 @@ def save_hdf5(imgs: dict[str, T.Any], outfile: Path):
                 fletcher32=True,
             )
             # metadata to show this is an image stack
-            h.attrs["CLASS"] = np.string_("IMAGE")
-            h.attrs["IMAGE_VERSION"] = np.string_("1.2")
-            h.attrs["IMAGE_SUBCLASS"] = np.string_("IMAGE_GRAYSCALE")
-            h.attrs["DISPLAY_ORIGIN"] = np.string_("LL")
+            h.attrs["CLASS"] = np.bytes_("IMAGE")
+            h.attrs["IMAGE_VERSION"] = np.bytes_("1.2")
+            h.attrs["IMAGE_SUBCLASS"] = np.bytes_("IMAGE_GRAYSCALE")
+            h.attrs["DISPLAY_ORIGIN"] = np.bytes_("LL")
             h.attrs["IMAGE_WHITE_IS_ZERO"] = np.uint8(0)
             # time vector
-            f[f"/{wl}/time"] = imgs[wl].time.values.astype(np.string_)
+            f[f"/{wl}/time"] = imgs[wl].time.values.astype(np.bytes_)
             # camera location
             if "lat" in imgs[wl].coords:
                 f[f"/{wl}/lat"] = imgs[wl].lat
@@ -48,7 +48,9 @@ def save_hdf5(imgs: dict[str, T.Any], outfile: Path):
 
 
 def load_hdf5(
-    filename: Path, treq: list[datetime] = None, wavelenreq: list[str] = None
+    filename: Path,
+    treq: list[datetime] | None = None,
+    wavelenreq: list[str] | None = None,
 ) -> dict[str, T.Any]:
 
     imgs = {}

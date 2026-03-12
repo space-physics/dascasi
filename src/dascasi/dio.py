@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 """
 Reads DASC allsky cameras images in FITS formats into GeoData.
 Run standalone from PlayDASC.py
 """
 
-from __future__ import annotations
 import os
 from pathlib import Path
 import warnings  # corrupt FITS files let off a flood of AstroPy warnings
@@ -13,7 +11,6 @@ import logging
 from astropy.io import fits
 import numpy as np
 from datetime import datetime
-from dateutil.parser import parse
 import xarray
 import typing as T
 import pymap3d as pm
@@ -33,10 +30,10 @@ log = logging.getLogger("dascasi-io")
 
 def load(
     fin: Path,
-    azelfn: Path = None,
-    treq: list[datetime] = None,
-    wavelenreq: list[str] = None,
-    wavelength_altitude_km: dict[str, float] = None,
+    azelfn: Path | None = None,
+    treq: list[datetime] | None = None,
+    wavelenreq: list[str] | None = None,
+    wavelength_altitude_km: dict[str, float] | None = None,
 ) -> dict[str, T.Any]:
     """
     reads FITS images and spatial az/el calibration for allsky camera
@@ -88,7 +85,7 @@ def _sift(flist: list[Path]) -> dict[str, xarray.DataArray]:
 
 
 def _project(
-    imgs: dict[str, xarray.DataArray], wavelength_altitude_km: dict[str, float]
+    imgs: dict[str, xarray.DataArray], wavelength_altitude_km: dict[str, float] | None
 ) -> dict[str, xarray.DataArray]:
     """project image stack to specified per-wavelength altitudes"""
 
@@ -123,7 +120,9 @@ def _project(
     return imgs
 
 
-def _collect(files: list[Path], img, time: list[datetime], wavelen: list[str]) -> dict[str, T.Any]:
+def _collect(
+    files: list[Path], img, time: list[datetime], wavelen: list[str]
+) -> dict[str, T.Any]:
     """assemble image stack into dict of xarray.DataArray"""
 
     afiles = np.asarray(files)  # for boolean indexing
@@ -137,7 +136,11 @@ def _collect(files: list[Path], img, time: list[datetime], wavelen: list[str]) -
         imgs[w] = xarray.DataArray(
             data=aimg[i, ...],
             name=w,
-            coords={"time": atime[i], "y": range(aimg.shape[1]), "x": range(aimg.shape[2])},
+            coords={
+                "time": atime[i],
+                "y": range(aimg.shape[1]),
+                "x": range(aimg.shape[2]),
+            },
             dims=["time", "y", "x"],
         )
         imgs[w].attrs["filename"] = [p.name for p in afiles[i]]
@@ -170,7 +173,9 @@ def _loadimg(fn: Path) -> tuple[T.Any, datetime, str]:
     return im, time, getwavelength(fn)
 
 
-def _slicereq(fin: Path, treq: list[datetime], wavelenreq: list[str] = None) -> list[Path]:
+def _slicereq(
+    fin: Path, treq: list[datetime] | None, wavelenreq: list[str] | None = None
+) -> list[Path]:
     """given user parameters, determine slice for image stack vs. wavelength and time"""
 
     if fin.is_dir():
@@ -228,7 +233,7 @@ def _camloc(imgs: dict[str, T.Any], path: Path) -> dict[str, T.Any]:
     return imgs
 
 
-def _azel(azelfn: Path, data: dict[str, T.Any]) -> dict[str, T.Any]:
+def _azel(azelfn: Path | None, data: dict[str, T.Any]) -> dict[str, T.Any]:
 
     if not azelfn:
         return data
@@ -240,7 +245,11 @@ def _azel(azelfn: Path, data: dict[str, T.Any]) -> dict[str, T.Any]:
     imgshape = data[wavelen[0]].shape[1:]
 
     if azel["az"].shape != imgshape:
-        downscale = (1, imgshape[0] // azel["az"].shape[0], imgshape[1] // azel["az"].shape[1])
+        downscale = (
+            1,
+            imgshape[0] // azel["az"].shape[0],
+            imgshape[1] // azel["az"].shape[1],
+        )
 
         if downscale_local_mean is None:
             raise ImportError("pip install scikit-image")
@@ -264,8 +273,7 @@ def _azel(azelfn: Path, data: dict[str, T.Any]) -> dict[str, T.Any]:
 
 
 def loadcal(azelfn: Path) -> dict[str, T.Any]:
-    """Load DASC plate scale (degrees/pixel)
-    """
+    """Load DASC plate scale (degrees/pixel)"""
 
     if isinstance(azelfn, (str, Path)):
         azfn, elfn = stem2fn(azelfn)
@@ -298,16 +306,17 @@ def loadcal(azelfn: Path) -> dict[str, T.Any]:
 
 
 def gettime(fn: Path) -> datetime:
-    """returns time of DASC frame in file (assumes one frame per file)
-    """
+    """returns time of DASC frame in file (assumes one frame per file)"""
 
     with fits.open(fn, mode="readonly") as h:
         try:
-            t = parse(h[0].header["OBSDATE"] + "T" + h[0].header["OBSSTART"])
-            #   expstart = parse(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART'])
+            t = datetime.fromisoformat(
+                h[0].header["OBSDATE"] + "T" + h[0].header["OBSSTART"]
+            )
+            #   expstart = datetime.fromisoformat(h[0].header['OBSDATE'] + 'T' + h[0].header['OBSSTART'])
         #               time.append((expstart, expstart + timedelta(seconds=h[0].header['EXPTIME']))) #EXPTIME is in seconds
         except KeyError:
-            t = parse(h[0].header["FRAME"])
+            t = datetime.fromisoformat(h[0].header["FRAME"])
 
     return t
 
