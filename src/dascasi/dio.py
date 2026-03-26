@@ -299,8 +299,12 @@ def loadcal(azelfn: Path) -> dict[str, T.Any]:
     el[bad] = np.nan
     az[bad] = np.nan
 
-    assert np.nanmax(el) <= 90 and np.nanmin(el) >= 0, f"{elfn}: 0 < elevation < 90 degrees."
-    assert np.nanmax(az) <= 360 and np.nanmin(az) >= 0, f"{azfn}: 0 < azimuth < 360 degrees."
+    assert np.nanmax(el) <= 90 and np.nanmin(el) >= 0, (
+        f"{elfn}: 0 < elevation < 90 degrees."
+    )
+    assert np.nanmax(az) <= 360 and np.nanmin(az) >= 0, (
+        f"{azfn}: 0 < azimuth < 360 degrees."
+    )
 
     return {"el": el, "az": az}
 

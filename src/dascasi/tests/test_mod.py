@@ -36,7 +36,9 @@ def test_basic_load(wavelength, L, t):
 
 def test_timerange_and_wavelength():
     data = du.load(
-        ir.files("dascasi.tests.data") , treq=("2012-01-03T08:32:02", "2016-01-04"), wavelenreq="0558"
+        ir.files("dascasi.tests.data"),
+        treq=("2012-01-03T08:32:02", "2016-01-04"),
+        wavelenreq="0558",
     )
     assert data["0558"].shape == (2, 512, 512)
     assert "0428" not in data
@@ -55,8 +57,11 @@ def test_singletime(wavelength, L):
 @pytest.mark.parametrize("wavelength, L", [("0428", 1), ("0558", 2), ("0630", 1)])
 def test_full_load(wavelength, L):
     # %% wavelength request
-    data = du.load(ir.files("dascasi.tests.data"),
-                   ir.files("dascasi.tests.data.cal") / "PKR_DASC_0558_20150213_", wavelenreq=wavelength)
+    data = du.load(
+        ir.files("dascasi.tests.data"),
+        ir.files("dascasi.tests.data.cal") / "PKR_DASC_0558_20150213_",
+        wavelenreq=wavelength,
+    )
     assert data[wavelength].shape == (L, 512, 512)
     assert data["az"].shape == (512, 512)
     assert data["el"].shape == (512, 512)
@@ -65,9 +70,10 @@ def test_full_load(wavelength, L):
 def test_read_write_hdf5(tmp_path):
     outfn = tmp_path / "test.h5"
 
-    ref = du.load(ir.files("dascasi.tests.data"),
-                  ir.files("dascasi.tests.data.cal") / "PKR_DASC_0558_20150213_"
-                  )
+    ref = du.load(
+        ir.files("dascasi.tests.data"),
+        ir.files("dascasi.tests.data.cal") / "PKR_DASC_0558_20150213_",
+    )
     du.save_hdf5(ref, outfn)
 
     dat = du.load(outfn)
